@@ -1,0 +1,33 @@
+﻿import 'package:flutter/material.dart';
+
+import '../core/theme/app_theme.dart';
+
+class ConfidenceBadge extends StatelessWidget {
+  const ConfidenceBadge({
+    super.key,
+    required this.label,
+    required this.display,
+  });
+
+  final String label;
+  final String display;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = WajzColors.confidenceColor(label, Theme.of(context).brightness);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        display,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+}
