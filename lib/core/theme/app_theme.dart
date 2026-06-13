@@ -52,7 +52,7 @@ abstract final class WajzSpacing {
   static const xl = 32.0;
 }
 
-ThemeData _build(Brightness brightness) {
+ThemeData appTheme(Brightness brightness, Locale locale) {
   final dark = brightness == Brightness.dark;
   final colorScheme = ColorScheme(
     brightness: brightness,
@@ -68,9 +68,11 @@ ThemeData _build(Brightness brightness) {
     outlineVariant: dark ? WajzColors.darkBorder : WajzColors.lightBorder,
   );
 
-  final textTheme = GoogleFonts.interTextTheme(
-    ThemeData(brightness: brightness).textTheme,
-  ).apply(
+  final baseTextTheme = ThemeData(brightness: brightness).textTheme;
+  final textTheme = (locale.languageCode == 'ar'
+          ? GoogleFonts.notoSansArabicTextTheme(baseTextTheme)
+          : GoogleFonts.interTextTheme(baseTextTheme))
+      .apply(
     bodyColor: colorScheme.onSurface,
     displayColor: colorScheme.onSurface,
   );
@@ -138,5 +140,5 @@ ThemeData _build(Brightness brightness) {
   );
 }
 
-final lightTheme = _build(Brightness.light);
-final darkTheme = _build(Brightness.dark);
+final lightTheme = appTheme(Brightness.light, const Locale('en'));
+final darkTheme = appTheme(Brightness.dark, const Locale('en'));

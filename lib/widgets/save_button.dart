@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/l10n/app_localizations.dart';
 import '../features/stories/story_providers.dart';
 
 class SaveButton extends ConsumerWidget {
@@ -14,7 +15,7 @@ class SaveButton extends ConsumerWidget {
     return IconButton(
       icon: Icon(saved ? Icons.bookmark : Icons.bookmark_border),
       color: saved ? Theme.of(context).colorScheme.primary : null,
-      tooltip: saved ? 'Remove from saved' : 'Save for later',
+      tooltip: saved ? context.l10n.removeFromSaved : context.l10n.saveForLater,
       onPressed: () async {
         try {
           await ref.read(savedIdsProvider.notifier).toggle(storyId);
@@ -22,7 +23,7 @@ class SaveButton extends ConsumerWidget {
         } catch (_) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not update saved stories.')),
+              SnackBar(content: Text(context.l10n.updateSavedError)),
             );
           }
         }

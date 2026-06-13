@@ -5,12 +5,26 @@ import '../../core/providers.dart';
 
 /// Stories for the Explore tab, optionally filtered by category.
 final exploreStoriesProvider =
-    FutureProvider.family<List<StoryListItem>, String?>((ref, category) {
-  return ref.watch(apiClientProvider).fetchStories(category: category, limit: 25);
+    FutureProvider.family<List<StoryListItem>, String?>((ref, category) async {
+  final language = ref.watch(appLocaleProvider).languageCode;
+  final stories =
+      await ref.watch(apiClientProvider).fetchStories(
+            category: category,
+            language: language,
+            limit: 25,
+          );
+  Future.microtask(() => ref.read(savedIdsProvider.notifier).seed(stories));
+  return stories;
 });
 
-final storyDetailProvider = FutureProvider.family<StoryDetail, String>((ref, id) {
-  return ref.watch(apiClientProvider).fetchStoryDetail(id);
+final storyDetailProvider = FutureProvider.family<StoryDetail, String>((ref, id) async {
+  final language = ref.watch(appLocaleProvider).languageCode;
+  final detail = await ref.watch(apiClientProvider).fetchStoryDetail(
+        id,
+        language: language,
+      );
+  Future.microtask(() => ref.read(savedIdsProvider.notifier).seedDetail(detail));
+  return detail;
 });
 
 /// Locally-known saved state, seeded from API responses and updated optimistically.
@@ -50,7 +64,10 @@ final savedIdsProvider =
     NotifierProvider<SavedIdsController, Set<String>>(SavedIdsController.new);
 
 final savedStoriesProvider = FutureProvider<List<SavedStory>>((ref) async {
-  final saved = await ref.watch(apiClientProvider).fetchSavedStories();
+  final language = ref.watch(appLocaleProvider).languageCode;
+  final saved = await ref.watch(apiClientProvider).fetchSavedStories(
+        language: language,
+      );
   // Keep the optimistic-set in sync whenever the list reloads.
   Future.microtask(
     () => ref.read(savedIdsProvider.notifier).seed(saved.map((s) => s.story)),

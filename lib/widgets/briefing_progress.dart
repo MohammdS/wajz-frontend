@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../core/l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 
 class BriefingProgress extends StatelessWidget {
@@ -25,7 +26,9 @@ class BriefingProgress extends StatelessWidget {
         ),
         const SizedBox(height: WajzSpacing.xs),
         Text(
-          read >= total && total > 0 ? 'Briefing complete' : '$read of $total stories read',
+          read >= total && total > 0
+              ? context.l10n.briefingComplete
+              : context.l10n.briefingProgress(read, total),
           style: theme.textTheme.bodySmall
               ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),

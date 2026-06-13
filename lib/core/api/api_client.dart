@@ -1,13 +1,15 @@
 ﻿import 'package:dio/dio.dart';
 
+import 'package:flutter/foundation.dart';
+
 import '../models/models.dart';
 
 /// Backend base URL. Override at build time:
 ///   flutter run --dart-define=WAJZ_API_BASE=http://192.168.1.10:8000
-/// Default targets the Android emulator's host loopback.
+/// Defaults to local host on web and the Android emulator's host loopback on mobile.
 const apiBaseUrl = String.fromEnvironment(
   'WAJZ_API_BASE',
-  defaultValue: 'http://10.0.2.2:8000',
+  defaultValue: kIsWeb ? 'http://127.0.0.1:8000' : 'http://10.0.2.2:8000',
 );
 
 class ApiClient {
@@ -45,6 +47,7 @@ class ApiClient {
   Future<List<StoryListItem>> fetchStories({
     String? category,
     String? region,
+    String? language,
     int limit = 20,
     int offset = 0,
   }) async {
@@ -53,6 +56,7 @@ class ApiClient {
       queryParameters: {
         'category': ?category,
         'region': ?region,
+        'language': ?language,
         'limit': limit,
         'offset': offset,
       },
@@ -63,15 +67,21 @@ class ApiClient {
         .toList();
   }
 
-  Future<StoryDetail> fetchStoryDetail(String id) async {
-    final response =
-        await _dio.get<Map<String, dynamic>>('/stories/$id', options: _authOptions);
+  Future<StoryDetail> fetchStoryDetail(String id, {String? language}) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/stories/$id',
+      queryParameters: {'language': ?language},
+      options: _authOptions,
+    );
     return StoryDetail.fromJson(response.data!);
   }
 
-  Future<Briefing> fetchTodayBriefing() async {
-    final response =
-        await _dio.get<Map<String, dynamic>>('/me/briefing/today', options: _authOptions);
+  Future<Briefing> fetchTodayBriefing({String? language}) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/me/briefing/today',
+      queryParameters: {'language': ?language},
+      options: _authOptions,
+    );
     return Briefing.fromJson(response.data!);
   }
 
@@ -90,9 +100,12 @@ class ApiClient {
     return Preferences.fromJson(response.data!);
   }
 
-  Future<List<SavedStory>> fetchSavedStories() async {
-    final response =
-        await _dio.get<List<dynamic>>('/me/saved-stories', options: _authOptions);
+  Future<List<SavedStory>> fetchSavedStories({String? language}) async {
+    final response = await _dio.get<List<dynamic>>(
+      '/me/saved-stories',
+      queryParameters: {'language': ?language},
+      options: _authOptions,
+    );
     return response.data!
         .map((item) => SavedStory.fromJson(item as Map<String, dynamic>))
         .toList();

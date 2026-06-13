@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../core/l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 
 class ConfidenceBadge extends StatelessWidget {
@@ -22,7 +23,7 @@ class ConfidenceBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        display,
+        context.l10n.confidence(label, display),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: color,
               fontWeight: FontWeight.w600,

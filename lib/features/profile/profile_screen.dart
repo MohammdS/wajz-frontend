@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/l10n/app_localizations.dart';
 import '../../core/models/models.dart';
 import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
@@ -15,26 +16,14 @@ import '../preferences/preferences_provider.dart';
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
-  static const _languages = [
-    ('en', 'English'),
-    ('ar', 'العربية'),
-    ('he', 'עברית'),
-  ];
-  static const _lengths = [
-    ('5_minutes', '5 minutes'),
-    ('10_minutes', '10 minutes'),
-    ('20_minutes', '20 minutes'),
-  ];
-  static const _levels = [
-    ('brief', 'Brief'),
-    ('standard', 'Standard'),
-    ('beginner_friendly', 'Beginner-friendly'),
-  ];
+  static const _languages = ['en', 'ar'];
+  static const _lengths = ['5_minutes', '10_minutes', '20_minutes'];
+  static const _levels = ['brief', 'standard', 'beginner_friendly'];
   static const _notifications = [
-    ('none', 'No notifications'),
-    ('daily_morning', 'Daily morning briefing'),
-    ('daily_evening', 'Daily evening briefing'),
-    ('major_confirmed_only', 'Major confirmed stories only'),
+    'none',
+    'daily_morning',
+    'daily_evening',
+    'major_confirmed_only',
   ];
 
   @override
@@ -44,7 +33,7 @@ class ProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(context.l10n.profile)),
       body: prefsAsync.when(
         loading: () => const LoadingState(),
         error: (e, _) => ErrorState(onRetry: () => ref.invalidate(preferencesProvider)),
@@ -55,19 +44,22 @@ class ProfileScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(WajzSpacing.md),
             children: [
-              _SectionTitle('Language'),
+              _SectionTitle(context.l10n.language),
               Wrap(
                 spacing: WajzSpacing.sm,
                 children: [
-                  for (final (code, name) in _languages)
+                  for (final code in _languages)
                     PreferenceChip(
-                      label: name,
+                      label: context.l10n.languageName(code),
                       selected: prefs.preferredLanguage == code,
-                      onTap: () => save(prefs.copyWith(preferredLanguage: code)),
+                      onTap: () {
+                        ref.read(appLocaleProvider.notifier).setLanguage(code);
+                        save(prefs.copyWith(preferredLanguage: code));
+                      },
                     ),
                 ],
               ),
-              _SectionTitle('Topics'),
+              _SectionTitle(context.l10n.topics),
               Wrap(
                 spacing: WajzSpacing.sm,
                 runSpacing: WajzSpacing.sm,
@@ -75,7 +67,7 @@ class ProfileScreen extends ConsumerWidget {
                   for (final category
                       in categories.value?.categories ?? prefs.topics)
                     PreferenceChip(
-                      label: category,
+                      label: context.l10n.category(category),
                       selected: prefs.topics.contains(category),
                       onTap: () {
                         final topics = [...prefs.topics];
@@ -87,14 +79,14 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                 ],
               ),
-              _SectionTitle('Regions'),
+              _SectionTitle(context.l10n.regions),
               Wrap(
                 spacing: WajzSpacing.sm,
                 runSpacing: WajzSpacing.sm,
                 children: [
                   for (final region in categories.value?.regions ?? prefs.regions)
                     PreferenceChip(
-                      label: region,
+                      label: context.l10n.region(region),
                       selected: prefs.regions.contains(region),
                       onTap: () {
                         final regions = [...prefs.regions];
@@ -106,24 +98,24 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                 ],
               ),
-              _SectionTitle('Briefing length'),
-              for (final (value, label) in _lengths)
+              _SectionTitle(context.l10n.briefingLength),
+              for (final value in _lengths)
                 SelectableTile(
-                  title: label,
+                  title: context.l10n.briefingLengthLabel(value),
                   selected: prefs.briefingLength == value,
                   onTap: () => save(prefs.copyWith(briefingLength: value)),
                 ),
-              _SectionTitle('Explanation level'),
-              for (final (value, label) in _levels)
+              _SectionTitle(context.l10n.explanationLevel),
+              for (final value in _levels)
                 SelectableTile(
-                  title: label,
+                  title: context.l10n.explanationLabel(value),
                   selected: prefs.explanationLevel == value,
                   onTap: () => save(prefs.copyWith(explanationLevel: value)),
                 ),
-              _SectionTitle('Notifications'),
-              for (final (value, label) in _notifications)
+              _SectionTitle(context.l10n.notifications),
+              for (final value in _notifications)
                 SelectableTile(
-                  title: label,
+                  title: context.l10n.notificationLabel(value),
                   selected: prefs.notificationPreference == value,
                   onTap: () => save(prefs.copyWith(notificationPreference: value)),
                 ),
@@ -132,7 +124,7 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: WajzSpacing.sm),
               OutlinedButton.icon(
                 icon: const Icon(Icons.logout, size: 18),
-                label: const Text('Sign out'),
+                label: Text(context.l10n.signOut),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(48),
                   foregroundColor: theme.colorScheme.error,
@@ -145,7 +137,7 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: WajzSpacing.md),
               Center(
                 child: Text(
-                  'Wajz 0.1.0 — Stay informed in minutes.',
+                  context.l10n.versionTagline,
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),

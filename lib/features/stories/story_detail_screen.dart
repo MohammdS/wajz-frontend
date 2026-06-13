@@ -2,9 +2,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/l10n/app_localizations.dart';
 import '../../core/models/models.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/time_ago.dart';
 import '../../widgets/category_chip.dart';
 import '../../widgets/confidence_badge.dart';
 import '../../widgets/save_button.dart';
@@ -32,10 +32,7 @@ class StoryDetailScreen extends ConsumerWidget {
         loading: () => const LoadingState(),
         error: (e, _) =>
             ErrorState(onRetry: () => ref.invalidate(storyDetailProvider(storyId))),
-        data: (story) {
-          ref.read(savedIdsProvider.notifier).seedDetail(story);
-          return _StoryDetailBody(story: story);
-        },
+        data: (story) => _StoryDetailBody(story: story),
       ),
     );
   }
@@ -49,8 +46,9 @@ class _StoryDetailBody extends StatelessWidget {
   Future<void> _openSource(BuildContext context, String url) async {
     final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Could not open the link.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.openLinkError)),
+      );
     }
   }
 
@@ -74,12 +72,14 @@ class _StoryDetailBody extends StatelessWidget {
               display: story.confidenceDisplay,
             ),
             Text(
-              'Sources: ${story.sources.map((s) => s.name).toSet().join(', ')}',
+              context.l10n.sources(
+                story.sources.map((s) => s.name).toSet().join(', '),
+              ),
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             Text(
-              'Updated ${timeAgo(story.lastUpdatedAt)}',
+              context.l10n.updated(context.l10n.timeAgo(story.lastUpdatedAt)),
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
@@ -91,24 +91,27 @@ class _StoryDetailBody extends StatelessWidget {
         ),
         if (_has(story.whatHappened))
           StorySection(
-            title: 'What happened',
+            title: context.l10n.whatHappened,
             child: Text(story.whatHappened!, style: theme.textTheme.bodyMedium),
           ),
         if (_has(story.whyItMatters))
           StorySection(
-            title: 'Why it matters',
+            title: context.l10n.whyItMatters,
             child: Text(story.whyItMatters!, style: theme.textTheme.bodyMedium),
           ),
         if (story.keyFacts.isNotEmpty)
-          StorySection(title: 'Key facts', child: BulletList(items: story.keyFacts)),
+          StorySection(
+            title: context.l10n.keyFacts,
+            child: BulletList(items: story.keyFacts),
+          ),
         if (story.unclearPoints.isNotEmpty)
           StorySection(
-            title: 'What is still unclear',
+            title: context.l10n.stillUnclear,
             child: BulletList(items: story.unclearPoints),
           ),
         if (story.sourceComparison.isNotEmpty)
           StorySection(
-            title: 'Source comparison',
+            title: context.l10n.sourceComparison,
             child: Column(
               children: [
                 for (final comparison in story.sourceComparison)
@@ -117,7 +120,7 @@ class _StoryDetailBody extends StatelessWidget {
             ),
           ),
         StorySection(
-          title: 'Original sources',
+          title: context.l10n.originalSources,
           child: Column(
             children: [
               for (final source in story.sources)
@@ -126,7 +129,7 @@ class _StoryDetailBody extends StatelessWidget {
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -135,7 +138,7 @@ class _StoryDetailBody extends StatelessWidget {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text('Open ${source.name}',
+                          child: Text(context.l10n.openSource(source.name),
                               overflow: TextOverflow.ellipsis),
                         ),
                         const Icon(Icons.open_in_new, size: 16),

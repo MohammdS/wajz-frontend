@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/states.dart';
 import '../../widgets/story_card.dart';
@@ -14,16 +15,16 @@ class SavedScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final saved = ref.watch(savedStoriesProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Saved')),
+      appBar: AppBar(title: Text(context.l10n.saved)),
       body: saved.when(
         loading: () => const LoadingState(),
         error: (e, _) => ErrorState(onRetry: () => ref.invalidate(savedStoriesProvider)),
         data: (items) {
           if (items.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.bookmark_border,
-              title: 'No saved stories',
-              message: 'Tap the bookmark on any story to read it later.',
+              title: context.l10n.noSavedStories,
+              message: context.l10n.saveStoryHelp,
             );
           }
           return RefreshIndicator(

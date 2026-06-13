@@ -1,7 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/l10n/app_localizations.dart';
 import '../../core/models/models.dart';
 import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
@@ -28,23 +29,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   String _briefingLength = '10_minutes';
   String _explanationLevel = 'standard';
 
-  static const _languages = [
-    ('en', 'English'),
-    ('ar', 'العربية (Arabic)'),
-    ('he', '×¢×‘×¨×™×ª (Hebrew)'),
-  ];
+  static const _languages = ['en', 'ar'];
 
-  static const _lengths = [
-    ('5_minutes', '5 minutes', '5–7 stories'),
-    ('10_minutes', '10 minutes', '10–12 stories'),
-    ('20_minutes', '20 minutes', '18–25 stories'),
-  ];
+  static const _lengths = ['5_minutes', '10_minutes', '20_minutes'];
 
-  static const _levels = [
-    ('brief', 'Brief', 'Just the essentials'),
-    ('standard', 'Standard', 'Clear summaries with context'),
-    ('beginner_friendly', 'Beginner-friendly', 'Extra background and simple language'),
-  ];
+  static const _levels = ['brief', 'standard', 'beginner_friendly'];
+
+  @override
+  void initState() {
+    super.initState();
+    _language = ref.read(appLocaleProvider).languageCode;
+  }
 
   @override
   void dispose() {
@@ -62,20 +57,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
     setState(() => _saving = true);
     try {
-      await ref.read(preferencesProvider.notifier).save(Preferences(
-            preferredLanguage: _language,
-            topics: _topics.toList(),
-            regions: _regions.toList(),
-            briefingLength: _briefingLength,
-            explanationLevel: _explanationLevel,
-          ));
+      await ref
+          .read(preferencesProvider.notifier)
+          .save(
+            Preferences(
+              preferredLanguage: _language,
+              topics: _topics.toList(),
+              regions: _regions.toList(),
+              briefingLength: _briefingLength,
+              explanationLevel: _explanationLevel,
+              onboardingCompleted: true,
+            ),
+          );
       await ref.read(sessionProvider.notifier).completeOnboarding();
       if (mounted) context.go('/today');
     } catch (_) {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save preferences. Try again.')),
+          SnackBar(content: Text(context.l10n.preferencesSaveError)),
         );
       }
     }
@@ -131,8 +131,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(_page < 3 ? 'Continue' : 'Start my briefing'),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        _page < 3
+                            ? context.l10n.continueLabel
+                            : context.l10n.startBriefing,
+                      ),
               ),
             ),
           ],
@@ -150,8 +155,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         const SizedBox(height: WajzSpacing.sm),
         Text(
           subtitle,
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: WajzSpacing.lg),
         body,
@@ -162,15 +168,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget _buildLanguagePage(ThemeData theme) {
     return _page_(
       theme,
-      'Welcome to Wajz',
-      'Choose your preferred language.',
+      context.l10n.welcome,
+      context.l10n.chooseLanguage,
       Column(
         children: [
-          for (final (code, name) in _languages)
+          for (final code in _languages)
             SelectableTile(
-              title: name,
+              title: context.l10n.languageName(code),
               selected: _language == code,
-              onTap: () => setState(() => _language = code),
+              onTap: () {
+                setState(() => _language = code);
+                ref.read(appLocaleProvider.notifier).setLanguage(code);
+              },
             ),
         ],
       ),
@@ -178,19 +187,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildTopicsPage(ThemeData theme, AsyncValue<CategoryInfo> info) {
-    final categories = info.value?.categories ??
-        const ['World', 'Technology', 'Economy', 'Science', 'Health', 'Sports', 'Culture', 'Politics'];
+    final categories =
+        info.value?.categories ??
+        const [
+          'World',
+          'Technology',
+          'Economy',
+          'Science',
+          'Health',
+          'Sports',
+          'Culture',
+          'Politics',
+        ];
     return _page_(
       theme,
-      'Your topics',
-      'Pick what you want in your briefing. You can change this anytime.',
+      context.l10n.yourTopics,
+      context.l10n.topicsHelp,
       Wrap(
         spacing: WajzSpacing.sm,
         runSpacing: WajzSpacing.sm,
         children: [
           for (final category in categories)
             PreferenceChip(
-              label: category,
+              label: context.l10n.category(category),
               selected: _topics.contains(category),
               onTap: () => setState(() {
                 _topics.contains(category)
@@ -204,22 +223,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildRegionsPage(ThemeData theme, AsyncValue<CategoryInfo> info) {
-    final regions = info.value?.regions ??
-        const ['World', 'Middle East', 'Israel / Palestine', 'United States', 'Europe'];
+    final regions =
+        info.value?.regions ??
+        const [
+          'World',
+          'Middle East',
+          'Israel / Palestine',
+          'United States',
+          'Europe',
+        ];
     return _page_(
       theme,
-      'Your regions',
-      'Which parts of the world do you follow?',
+      context.l10n.yourRegions,
+      context.l10n.regionsHelp,
       Wrap(
         spacing: WajzSpacing.sm,
         runSpacing: WajzSpacing.sm,
         children: [
           for (final region in regions)
             PreferenceChip(
-              label: region,
+              label: context.l10n.region(region),
               selected: _regions.contains(region),
               onTap: () => setState(() {
-                _regions.contains(region) ? _regions.remove(region) : _regions.add(region);
+                _regions.contains(region)
+                    ? _regions.remove(region)
+                    : _regions.add(region);
               }),
             ),
         ],
@@ -230,25 +258,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget _buildLengthPage(ThemeData theme) {
     return _page_(
       theme,
-      'Your briefing',
-      'How much time do you want to spend each day?',
+      context.l10n.yourBriefing,
+      context.l10n.briefingTimeHelp,
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final (value, label, detail) in _lengths)
+          for (final value in _lengths)
             SelectableTile(
-              title: label,
-              subtitle: detail,
+              title: context.l10n.briefingLengthLabel(value),
+              subtitle: context.l10n.briefingLengthDetail(value),
               selected: _briefingLength == value,
               onTap: () => setState(() => _briefingLength = value),
             ),
           const SizedBox(height: WajzSpacing.lg),
-          Text('Explanation level', style: theme.textTheme.titleSmall),
+          Text(
+            context.l10n.explanationLevel,
+            style: theme.textTheme.titleSmall,
+          ),
           const SizedBox(height: WajzSpacing.sm),
-          for (final (value, label, detail) in _levels)
+          for (final value in _levels)
             SelectableTile(
-              title: label,
-              subtitle: detail,
+              title: context.l10n.explanationLabel(value),
+              subtitle: context.l10n.explanationDetail(value),
               selected: _explanationLevel == value,
               onTap: () => setState(() => _explanationLevel = value),
             ),
@@ -286,7 +317,9 @@ class SelectableTile extends StatelessWidget {
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outlineVariant,
               width: selected ? 2 : 1,
             ),
           ),
@@ -300,14 +333,19 @@ class SelectableTile extends StatelessWidget {
                     if (subtitle != null)
                       Text(
                         subtitle!,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                   ],
                 ),
               ),
               if (selected)
-                Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 20),
+                Icon(
+                  Icons.check_circle,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
             ],
           ),
         ),

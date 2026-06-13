@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/l10n/app_localizations.dart';
 import '../core/models/models.dart';
 import '../core/theme/app_theme.dart';
-import '../core/utils/time_ago.dart';
 import 'category_chip.dart';
 import 'confidence_badge.dart';
 import 'save_button.dart';
@@ -20,8 +20,8 @@ class StoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final sourceText = story.sourceCount > 1
-        ? '${story.sources.first} + ${story.sourceCount - 1}'
-        : (story.sources.isNotEmpty ? story.sources.first : 'Unknown source');
+        ? context.l10n.moreSources(story.sources.first, story.sourceCount - 1)
+        : (story.sources.isNotEmpty ? story.sources.first : context.l10n.unknownSource);
 
     return Card(
       child: InkWell(
@@ -69,12 +69,12 @@ class StoryCard extends StatelessWidget {
                     display: story.confidenceDisplay,
                   ),
                   Text(
-                    'Sources: $sourceText',
+                    context.l10n.sources(sourceText),
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                   Text(
-                    timeAgo(story.lastUpdatedAt),
+                    context.l10n.timeAgo(story.lastUpdatedAt),
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),

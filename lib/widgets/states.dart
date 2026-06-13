@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../core/l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 
 class LoadingState extends StatelessWidget {
@@ -73,17 +74,17 @@ class ErrorState extends StatelessWidget {
           children: [
             Icon(Icons.cloud_off, size: 48, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(height: WajzSpacing.md),
-            Text('Something went wrong', style: theme.textTheme.titleMedium),
+            Text(context.l10n.somethingWentWrong, style: theme.textTheme.titleMedium),
             const SizedBox(height: WajzSpacing.sm),
             Text(
-              message ?? 'Could not reach Wajz. Check your connection and try again.',
+              message ?? context.l10n.connectionError,
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
               const SizedBox(height: WajzSpacing.md),
-              OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
+              OutlinedButton(onPressed: onRetry, child: Text(context.l10n.tryAgain)),
             ],
           ],
         ),

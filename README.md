@@ -1,6 +1,14 @@
 # wajz-mobile
 
-Flutter app for **Wajz (وجز)** — a calm, trust-first, source-grounded daily news briefing.
+Flutter app for **Wajz (واجِز)** — a calm, trust-first, source-grounded daily news briefing.
+
+## Entry points
+
+- Consumer mobile/web app: `flutter run -t lib/main.dart`
+- Admin web dashboard: `flutter run -d chrome -t lib/main_admin.dart`
+
+The admin dashboard is a separate web entry point. Its visible controls reflect
+roles, but all `/admin/*` authorization is enforced by the FastAPI backend.
 
 > Stay informed in minutes. No noise. Sources included.
 
@@ -35,11 +43,22 @@ flutter pub get
 # Android emulator (backend on host machine):
 flutter run
 
+# Web browser (backend on the same machine):
+flutter run -d chrome
+
 # Physical device / custom host:
 flutter run --dart-define=WAJZ_API_BASE=http://192.168.1.10:8000
 ```
 
-The default API base is `http://10.0.2.2:8000` (Android-emulator loopback).
+The default API base is `http://10.0.2.2:8000` on Android and
+`http://127.0.0.1:8000` on web. Override either with `WAJZ_API_BASE`.
+
+Build release artifacts with:
+
+```bash
+flutter build apk
+flutter build web
+```
 
 Auth in this MVP uses the backend's dev-login: the app creates a stable
 per-device account automatically. Swap `SessionController.ensureSignedIn` for

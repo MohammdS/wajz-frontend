@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/app_localizations.dart';
 import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/preference_chip.dart';
@@ -26,7 +27,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final stories = ref.watch(exploreStoriesProvider(_category));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Explore')),
+      appBar: AppBar(title: Text(context.l10n.explore)),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -39,7 +40,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 Padding(
                   padding: const EdgeInsets.only(right: WajzSpacing.sm),
                   child: PreferenceChip(
-                    label: 'All',
+                    label: context.l10n.all,
                     selected: _category == null,
                     onTap: () => setState(() => _category = null),
                   ),
@@ -49,7 +50,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   Padding(
                     padding: const EdgeInsets.only(right: WajzSpacing.sm),
                     child: PreferenceChip(
-                      label: category,
+                      label: context.l10n.category(category),
                       selected: _category == category,
                       onTap: () => setState(() => _category = category),
                     ),
@@ -64,12 +65,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 onRetry: () => ref.invalidate(exploreStoriesProvider(_category)),
               ),
               data: (items) {
-                ref.read(savedIdsProvider.notifier).seed(items);
                 if (items.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.travel_explore,
-                    title: 'Nothing here yet',
-                    message: 'No stories in this category right now.',
+                    title: context.l10n.nothingHere,
+                    message: context.l10n.noStoriesInCategory,
                   );
                 }
                 return RefreshIndicator(

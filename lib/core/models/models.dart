@@ -1,4 +1,4 @@
-﻿/// API models for the Wajz backend.
+/// API models for the Wajz backend.
 library;
 
 class StoryListItem {
@@ -15,6 +15,7 @@ class StoryListItem {
     required this.imageUrl,
     required this.lastUpdatedAt,
     required this.saved,
+    required this.contentLanguage,
   });
 
   final String id;
@@ -29,36 +30,39 @@ class StoryListItem {
   final String? imageUrl;
   final DateTime lastUpdatedAt;
   final bool saved;
+  final String contentLanguage;
 
   factory StoryListItem.fromJson(Map<String, dynamic> json) => StoryListItem(
-        id: json['id'] as String,
-        headline: json['headline'] as String,
-        summary: json['summary'] as String?,
-        category: json['category'] as String?,
-        region: json['region'] as String?,
-        confidenceLabel: json['confidence_label'] as String,
-        confidenceDisplay: json['confidence_display'] as String,
-        sourceCount: json['source_count'] as int,
-        sources: (json['sources'] as List).cast<String>(),
-        imageUrl: json['image_url'] as String?,
-        lastUpdatedAt: DateTime.parse(json['last_updated_at'] as String),
-        saved: json['saved'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    headline: json['headline'] as String,
+    summary: json['summary'] as String?,
+    category: json['category'] as String?,
+    region: json['region'] as String?,
+    confidenceLabel: json['confidence_label'] as String,
+    confidenceDisplay: json['confidence_display'] as String,
+    sourceCount: json['source_count'] as int,
+    sources: (json['sources'] as List).cast<String>(),
+    imageUrl: json['image_url'] as String?,
+    lastUpdatedAt: DateTime.parse(json['last_updated_at'] as String),
+    saved: json['saved'] as bool? ?? false,
+    contentLanguage: json['content_language'] as String? ?? 'en',
+  );
 
   StoryListItem copyWith({bool? saved}) => StoryListItem(
-        id: id,
-        headline: headline,
-        summary: summary,
-        category: category,
-        region: region,
-        confidenceLabel: confidenceLabel,
-        confidenceDisplay: confidenceDisplay,
-        sourceCount: sourceCount,
-        sources: sources,
-        imageUrl: imageUrl,
-        lastUpdatedAt: lastUpdatedAt,
-        saved: saved ?? this.saved,
-      );
+    id: id,
+    headline: headline,
+    summary: summary,
+    category: category,
+    region: region,
+    confidenceLabel: confidenceLabel,
+    confidenceDisplay: confidenceDisplay,
+    sourceCount: sourceCount,
+    sources: sources,
+    imageUrl: imageUrl,
+    lastUpdatedAt: lastUpdatedAt,
+    saved: saved ?? this.saved,
+    contentLanguage: contentLanguage,
+  );
 }
 
 class SourceLink {
@@ -75,13 +79,13 @@ class SourceLink {
   final DateTime? publishedAt;
 
   factory SourceLink.fromJson(Map<String, dynamic> json) => SourceLink(
-        name: json['name'] as String,
-        title: json['title'] as String,
-        url: json['url'] as String,
-        publishedAt: json['published_at'] != null
-            ? DateTime.parse(json['published_at'] as String)
-            : null,
-      );
+    name: json['name'] as String,
+    title: json['title'] as String,
+    url: json['url'] as String,
+    publishedAt: json['published_at'] != null
+        ? DateTime.parse(json['published_at'] as String)
+        : null,
+  );
 }
 
 class SourceComparison {
@@ -90,7 +94,8 @@ class SourceComparison {
   final String source;
   final String framing;
 
-  factory SourceComparison.fromJson(Map<String, dynamic> json) => SourceComparison(
+  factory SourceComparison.fromJson(Map<String, dynamic> json) =>
+      SourceComparison(
         source: json['source'] as String,
         framing: json['framing'] as String,
       );
@@ -113,6 +118,7 @@ class StoryDetail {
     required this.sourceComparison,
     required this.lastUpdatedAt,
     required this.saved,
+    required this.contentLanguage,
   });
 
   final String id;
@@ -130,28 +136,30 @@ class StoryDetail {
   final List<SourceComparison> sourceComparison;
   final DateTime lastUpdatedAt;
   final bool saved;
+  final String contentLanguage;
 
   factory StoryDetail.fromJson(Map<String, dynamic> json) => StoryDetail(
-        id: json['id'] as String,
-        headline: json['headline'] as String,
-        summary: json['summary'] as String?,
-        whatHappened: json['what_happened'] as String?,
-        whyItMatters: json['why_it_matters'] as String?,
-        keyFacts: (json['key_facts'] as List? ?? []).cast<String>(),
-        unclearPoints: (json['unclear_points'] as List? ?? []).cast<String>(),
-        category: json['category'] as String?,
-        region: json['region'] as String?,
-        confidenceLabel: json['confidence_label'] as String,
-        confidenceDisplay: json['confidence_display'] as String,
-        sources: (json['sources'] as List)
-            .map((s) => SourceLink.fromJson(s as Map<String, dynamic>))
-            .toList(),
-        sourceComparison: (json['source_comparison'] as List? ?? [])
-            .map((s) => SourceComparison.fromJson(s as Map<String, dynamic>))
-            .toList(),
-        lastUpdatedAt: DateTime.parse(json['last_updated_at'] as String),
-        saved: json['saved'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    headline: json['headline'] as String,
+    summary: json['summary'] as String?,
+    whatHappened: json['what_happened'] as String?,
+    whyItMatters: json['why_it_matters'] as String?,
+    keyFacts: (json['key_facts'] as List? ?? []).cast<String>(),
+    unclearPoints: (json['unclear_points'] as List? ?? []).cast<String>(),
+    category: json['category'] as String?,
+    region: json['region'] as String?,
+    confidenceLabel: json['confidence_label'] as String,
+    confidenceDisplay: json['confidence_display'] as String,
+    sources: (json['sources'] as List)
+        .map((s) => SourceLink.fromJson(s as Map<String, dynamic>))
+        .toList(),
+    sourceComparison: (json['source_comparison'] as List? ?? [])
+        .map((s) => SourceComparison.fromJson(s as Map<String, dynamic>))
+        .toList(),
+    lastUpdatedAt: DateTime.parse(json['last_updated_at'] as String),
+    saved: json['saved'] as bool? ?? false,
+    contentLanguage: json['content_language'] as String? ?? 'en',
+  );
 }
 
 class Briefing {
@@ -172,15 +180,15 @@ class Briefing {
   final String completionMessage;
 
   factory Briefing.fromJson(Map<String, dynamic> json) => Briefing(
-        date: json['date'] as String,
-        briefingLength: json['briefing_length'] as String,
-        estimatedReadTimeMinutes: json['estimated_read_time_minutes'] as int,
-        greeting: json['greeting'] as String,
-        stories: (json['stories'] as List)
-            .map((s) => StoryListItem.fromJson(s as Map<String, dynamic>))
-            .toList(),
-        completionMessage: json['completion_message'] as String,
-      );
+    date: json['date'] as String,
+    briefingLength: json['briefing_length'] as String,
+    estimatedReadTimeMinutes: json['estimated_read_time_minutes'] as int,
+    greeting: json['greeting'] as String,
+    stories: (json['stories'] as List)
+        .map((s) => StoryListItem.fromJson(s as Map<String, dynamic>))
+        .toList(),
+    completionMessage: json['completion_message'] as String,
+  );
 }
 
 class Preferences {
@@ -191,6 +199,7 @@ class Preferences {
     this.briefingLength = '10_minutes',
     this.explanationLevel = 'standard',
     this.notificationPreference = 'daily_morning',
+    this.onboardingCompleted = false,
   });
 
   final String preferredLanguage;
@@ -199,25 +208,28 @@ class Preferences {
   final String briefingLength;
   final String explanationLevel;
   final String notificationPreference;
+  final bool onboardingCompleted;
 
   factory Preferences.fromJson(Map<String, dynamic> json) => Preferences(
-        preferredLanguage: json['preferred_language'] as String? ?? 'en',
-        topics: (json['topics'] as List? ?? []).cast<String>(),
-        regions: (json['regions'] as List? ?? []).cast<String>(),
-        briefingLength: json['briefing_length'] as String? ?? '10_minutes',
-        explanationLevel: json['explanation_level'] as String? ?? 'standard',
-        notificationPreference:
-            json['notification_preference'] as String? ?? 'daily_morning',
-      );
+    preferredLanguage: json['preferred_language'] as String? ?? 'en',
+    topics: (json['topics'] as List? ?? []).cast<String>(),
+    regions: (json['regions'] as List? ?? []).cast<String>(),
+    briefingLength: json['briefing_length'] as String? ?? '10_minutes',
+    explanationLevel: json['explanation_level'] as String? ?? 'standard',
+    notificationPreference:
+        json['notification_preference'] as String? ?? 'daily_morning',
+    onboardingCompleted: json['onboarding_completed'] as bool? ?? false,
+  );
 
   Map<String, dynamic> toJson() => {
-        'preferred_language': preferredLanguage,
-        'topics': topics,
-        'regions': regions,
-        'briefing_length': briefingLength,
-        'explanation_level': explanationLevel,
-        'notification_preference': notificationPreference,
-      };
+    'preferred_language': preferredLanguage,
+    'topics': topics,
+    'regions': regions,
+    'briefing_length': briefingLength,
+    'explanation_level': explanationLevel,
+    'notification_preference': notificationPreference,
+    'onboarding_completed': onboardingCompleted,
+  };
 
   Preferences copyWith({
     String? preferredLanguage,
@@ -226,15 +238,17 @@ class Preferences {
     String? briefingLength,
     String? explanationLevel,
     String? notificationPreference,
-  }) =>
-      Preferences(
-        preferredLanguage: preferredLanguage ?? this.preferredLanguage,
-        topics: topics ?? this.topics,
-        regions: regions ?? this.regions,
-        briefingLength: briefingLength ?? this.briefingLength,
-        explanationLevel: explanationLevel ?? this.explanationLevel,
-        notificationPreference: notificationPreference ?? this.notificationPreference,
-      );
+    bool? onboardingCompleted,
+  }) => Preferences(
+    preferredLanguage: preferredLanguage ?? this.preferredLanguage,
+    topics: topics ?? this.topics,
+    regions: regions ?? this.regions,
+    briefingLength: briefingLength ?? this.briefingLength,
+    explanationLevel: explanationLevel ?? this.explanationLevel,
+    notificationPreference:
+        notificationPreference ?? this.notificationPreference,
+    onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+  );
 }
 
 class SavedStory {
@@ -244,9 +258,9 @@ class SavedStory {
   final StoryListItem story;
 
   factory SavedStory.fromJson(Map<String, dynamic> json) => SavedStory(
-        savedAt: DateTime.parse(json['saved_at'] as String),
-        story: StoryListItem.fromJson(json['story'] as Map<String, dynamic>),
-      );
+    savedAt: DateTime.parse(json['saved_at'] as String),
+    story: StoryListItem.fromJson(json['story'] as Map<String, dynamic>),
+  );
 }
 
 class CategoryInfo {
@@ -256,7 +270,7 @@ class CategoryInfo {
   final List<String> regions;
 
   factory CategoryInfo.fromJson(Map<String, dynamic> json) => CategoryInfo(
-        categories: (json['categories'] as List).cast<String>(),
-        regions: (json['regions'] as List).cast<String>(),
-      );
+    categories: (json['categories'] as List).cast<String>(),
+    regions: (json['regions'] as List).cast<String>(),
+  );
 }

@@ -1,5 +1,4 @@
-﻿import 'dart:math';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api/api_client.dart';
@@ -13,6 +12,21 @@ final localStoreProvider = Provider<LocalStore>(
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
+class AppLocaleController extends Notifier<Locale> {
+  @override
+  Locale build() => Locale(ref.read(localStoreProvider).language);
+
+  Future<void> setLanguage(String language) async {
+    if (!const {'en', 'ar'}.contains(language)) return;
+    await ref.read(localStoreProvider).setLanguage(language);
+    state = Locale(language);
+  }
+}
+
+final appLocaleProvider = NotifierProvider<AppLocaleController, Locale>(
+  AppLocaleController.new,
+);
+
 /// App session state: token + whether onboarding is complete.
 class SessionState {
   const SessionState({this.token, required this.onboardingDone});
@@ -22,46 +36,65 @@ class SessionState {
 
   bool get authenticated => token != null;
 
-  SessionState copyWith({String? token, bool? onboardingDone}) =>
-      SessionState(token: token ?? this.token, onboardingDone: onboardingDone ?? this.onboardingDone);
+  SessionState copyWith({String? token, bool? onboardingDone}) => SessionState(
+    token: token ?? this.token,
+    onboardingDone: onboardingDone ?? this.onboardingDone,
+  );
 }
 
 class SessionController extends Notifier<SessionState> {
   @override
   SessionState build() {
-    return SessionState(onboardingDone: ref.read(localStoreProvider).onboardingDone);
+    return const SessionState(onboardingDone: false);
   }
 
-  /// Restore a stored token, or sign in with a stable per-device dev account.
-  /// (MVP auth: the backend issues dev JWTs; swap for Firebase/Supabase later.)
-  Future<void> ensureSignedIn() async {
+  /// Restore a stored development session without creating an account.
+  Future<bool> restoreSession() async {
     final store = ref.read(localStoreProvider);
     final api = ref.read(apiClientProvider);
 
-    var token = await store.readToken();
-    if (token == null) {
-      var email = store.deviceEmail;
-      if (email == null) {
-        final suffix = Random().nextInt(0x7FFFFFFF).toRadixString(16);
-        email = 'reader-$suffix@wajz.dev';
-        await store.setDeviceEmail(email);
-      }
-      token = await api.devLogin(email);
-      await store.writeToken(token);
-    }
+    final token = await store.readToken();
+    if (token == null) return false;
+
     api.token = token;
-    state = state.copyWith(token: token);
+    try {
+      await _loadSession(token);
+      return true;
+    } catch (_) {
+      await store.clearToken();
+      api.token = null;
+      return false;
+    }
+  }
+
+  /// Temporary development login. The backend creates the account if needed.
+  Future<void> signIn(String email, {String? displayName}) async {
+    final store = ref.read(localStoreProvider);
+    final api = ref.read(apiClientProvider);
+    final token = await api.devLogin(email, displayName: displayName);
+    await store.writeToken(token);
+    api.token = token;
+    await _loadSession(token);
+  }
+
+  Future<void> _loadSession(String token) async {
+    final preferences = await ref.read(apiClientProvider).fetchPreferences();
+    await ref
+        .read(appLocaleProvider.notifier)
+        .setLanguage(preferences.preferredLanguage);
+    state = state.copyWith(
+      token: token,
+      onboardingDone: preferences.onboardingCompleted,
+    );
   }
 
   Future<void> completeOnboarding() async {
-    await ref.read(localStoreProvider).setOnboardingDone(true);
     state = state.copyWith(onboardingDone: true);
   }
 
   Future<void> signOut() async {
     final store = ref.read(localStoreProvider);
     await store.clearToken();
-    await store.setOnboardingDone(false);
     ref.read(apiClientProvider).token = null;
     state = const SessionState(token: null, onboardingDone: false);
   }
