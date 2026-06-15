@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 
@@ -11,16 +11,32 @@ class StorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: WajzSpacing.lg),
-        Text(
-          title,
-          style: Theme.of(context)
-              .textTheme
-              .titleSmall
-              ?.copyWith(fontWeight: FontWeight.w700),
+        Row(
+          children: [
+            Container(
+              width: 4,
+              height: 18,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondary,
+                borderRadius: BorderRadius.circular(WajzRadius.pill),
+              ),
+            ),
+            const SizedBox(width: WajzSpacing.sm),
+            Text(
+              title,
+              style: wajzDisplayFont(
+                Localizations.localeOf(context),
+                textStyle: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: WajzSpacing.sm),
         child,
@@ -46,7 +62,18 @@ class BulletList extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('–  ', style: theme.textTheme.bodyMedium),
+                Padding(
+                  padding: const EdgeInsets.only(top: 7),
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: WajzSpacing.sm + 2),
                 Expanded(child: Text(item, style: theme.textTheme.bodyMedium)),
               ],
             ),

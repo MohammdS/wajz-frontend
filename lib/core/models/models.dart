@@ -168,7 +168,9 @@ class Briefing {
     required this.briefingLength,
     required this.estimatedReadTimeMinutes,
     required this.greeting,
+    this.displayName,
     required this.stories,
+    required this.openedStoryIds,
     required this.completionMessage,
   });
 
@@ -176,7 +178,9 @@ class Briefing {
   final String briefingLength;
   final int estimatedReadTimeMinutes;
   final String greeting;
+  final String? displayName;
   final List<StoryListItem> stories;
+  final Set<String> openedStoryIds;
   final String completionMessage;
 
   factory Briefing.fromJson(Map<String, dynamic> json) => Briefing(
@@ -184,9 +188,13 @@ class Briefing {
     briefingLength: json['briefing_length'] as String,
     estimatedReadTimeMinutes: json['estimated_read_time_minutes'] as int,
     greeting: json['greeting'] as String,
+    displayName: json['display_name'] as String?,
     stories: (json['stories'] as List)
         .map((s) => StoryListItem.fromJson(s as Map<String, dynamic>))
         .toList(),
+    openedStoryIds: (json['opened_story_ids'] as List? ?? [])
+        .cast<String>()
+        .toSet(),
     completionMessage: json['completion_message'] as String,
   );
 }

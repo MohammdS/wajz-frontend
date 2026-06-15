@@ -11,6 +11,7 @@ import 'features/saved/saved_screen.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/stories/story_detail_screen.dart';
 import 'widgets/app_shell.dart';
+import 'widgets/responsive_frame.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -23,16 +24,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/',
+        builder: (context, state) =>
+            const ResponsiveWebFrame(child: SplashScreen()),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) =>
+            const ResponsiveWebFrame(child: LoginScreen()),
+      ),
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        builder: (context, state) =>
+            const ResponsiveWebFrame(child: OnboardingScreen()),
       ),
       GoRoute(
         path: '/story/:id',
-        builder: (context, state) =>
-            StoryDetailScreen(storyId: state.pathParameters['id']!),
+        builder: (context, state) => ResponsiveWebFrame(
+          child: StoryDetailScreen(storyId: state.pathParameters['id']!),
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>

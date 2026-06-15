@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api/api_client.dart';
 import 'models/models.dart';
 import 'storage/local_store.dart';
+import 'theme/app_theme.dart';
 
 /// Overridden in main() with the real instance before runApp.
 final localStoreProvider = Provider<LocalStore>(
@@ -25,6 +26,21 @@ class AppLocaleController extends Notifier<Locale> {
 
 final appLocaleProvider = NotifierProvider<AppLocaleController, Locale>(
   AppLocaleController.new,
+);
+
+/// The selected colour theme, persisted locally and applied app-wide.
+class AppThemeController extends Notifier<WajzPalette> {
+  @override
+  WajzPalette build() => wajzPaletteById(ref.read(localStoreProvider).themeId);
+
+  Future<void> setPalette(WajzPalette palette) async {
+    await ref.read(localStoreProvider).setThemeId(palette.id);
+    state = palette;
+  }
+}
+
+final appThemeProvider = NotifierProvider<AppThemeController, WajzPalette>(
+  AppThemeController.new,
 );
 
 /// App session state: token + whether onboarding is complete.

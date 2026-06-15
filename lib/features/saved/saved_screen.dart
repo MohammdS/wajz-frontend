@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
 import '../../widgets/states.dart';
 import '../../widgets/story_card.dart';
 import '../stories/story_providers.dart';
+import 'saved_desktop.dart';
 
 /// Saved tab (PRD 16.4): saved list, unsave, empty state.
 class SavedScreen extends ConsumerWidget {
@@ -13,6 +15,8 @@ class SavedScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (isDesktopWidth(context)) return const DesktopSavedView();
+
     final saved = ref.watch(savedStoriesProvider);
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.saved)),

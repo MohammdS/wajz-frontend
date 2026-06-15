@@ -1,11 +1,11 @@
 {
-    "name": "Wajz",
+    "name": "Wajz · واجِز",
     "short_name": "Wajz",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#101820",
-    "theme_color": "#2F6D6A",
-    "description": "Calm, source-grounded daily news briefings.",
+    "background_color": "#001030",
+    "theme_color": "#001030",
+    "description": "Trusted Middle Eastern news, clustered and summarised into clear, balanced briefings. Sources always included.",
     "prefer_related_applications": false,
     "icons": [
         {

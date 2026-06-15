@@ -13,6 +13,7 @@ class WajzApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(appLocaleProvider);
+    final palette = ref.watch(appThemeProvider);
     return MaterialApp.router(
       title: 'Wajz',
       debugShowCheckedModeBanner: false,
@@ -24,9 +25,9 @@ class WajzApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: appTheme(Brightness.light, locale),
-      darkTheme: appTheme(Brightness.dark, locale),
-      themeMode: ThemeMode.system,
+      theme: appTheme(Brightness.light, locale, palette: palette),
+      darkTheme: appTheme(Brightness.dark, locale, palette: palette),
+      themeMode: palette.modeLock ?? ThemeMode.system,
       routerConfig: ref.watch(routerProvider),
     );
   }

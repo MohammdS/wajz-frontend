@@ -39,11 +39,19 @@ class AppLocalizations {
       ? 'تعذر تسجيل الدخول. تحقق من اتصال الخادم وحاول مرة أخرى.'
       : 'Could not sign in. Check the backend connection and try again.';
   String get startBriefing => isArabic ? 'ابدأ موجزي' : 'Start my briefing';
-  String get today => isArabic ? 'اليوم' : 'Today';
+  String get today => isArabic ? 'الموجز' : 'Briefing';
   String get explore => isArabic ? 'استكشف' : 'Explore';
   String get saved => isArabic ? 'المحفوظات' : 'Saved';
   String get profile => isArabic ? 'الملف الشخصي' : 'Profile';
   String get all => isArabic ? 'الكل' : 'All';
+
+  // Desktop reading pane.
+  String get selectStoryPrompt =>
+      isArabic ? 'اختر خبراً للقراءة' : 'Select a story to read';
+  String get selectStoryHint => isArabic
+      ? 'اختر خبراً من القائمة لعرض الموجز الكامل ومصادره هنا.'
+      : 'Pick a story from the list to read the full briefing and its sources here.';
+  String get backToList => isArabic ? 'العودة إلى القائمة' : 'Back to list';
 
   String get welcome => isArabic ? 'مرحباً بك في واجِز' : 'Welcome to Wajz';
   String get chooseLanguage =>
@@ -65,6 +73,23 @@ class AppLocalizations {
       ? 'تعذر حفظ التفضيلات. حاول مرة أخرى.'
       : 'Could not save preferences. Try again.';
 
+  String get appearance => isArabic ? 'المظهر' : 'Appearance';
+  String themeName(String id) {
+    switch (id) {
+      case 'royal_violet':
+        return isArabic ? 'بنفسجي ملكي' : 'Royal Violet';
+      case 'emerald':
+        return isArabic ? 'زمرّدي' : 'Emerald';
+      case 'amber_dusk':
+        return isArabic ? 'كهرماني' : 'Amber Dusk';
+      case 'pearl':
+        return isArabic ? 'أبيض لؤلؤي' : 'Pearl White';
+      case 'black':
+      default:
+        return isArabic ? 'أسود' : 'Black';
+    }
+  }
+
   String get language => isArabic ? 'اللغة' : 'Language';
   String get topics => isArabic ? 'المواضيع' : 'Topics';
   String get regions => isArabic ? 'المناطق' : 'Regions';
@@ -82,20 +107,24 @@ class AppLocalizations {
   String get caughtUp =>
       isArabic ? 'أنت مطّلع على كل جديد.' : 'You are caught up.';
   String get caughtUpDetail => isArabic
-      ? 'هذا كل ما يستحق معرفته في الوقت الحالي.'
-      : 'That is everything worth knowing for now.';
+      ? 'يمكنك الآن التركيز على مهام أخرى.'
+      : 'You can focus on other tasks now.';
   String briefingReady(int minutes, int count) => isArabic
       ? 'موجزك لمدة $minutes دقائق جاهز. تم اختيار $count أخبار من مصادر موثوقة.'
       : 'Your $minutes-minute briefing is ready. $count stories selected from trusted sources.';
-  String greeting(DateTime now) {
+  String greeting(DateTime now, {String? name}) {
     final hour = now.hour;
+    final String base;
     if (hour >= 5 && hour < 12) {
-      return isArabic ? 'صباح الخير.' : 'Good morning.';
+      base = isArabic ? 'صباح الخير' : 'Good morning';
+    } else if (hour >= 12 && hour < 18) {
+      base = isArabic ? 'مساء الخير' : 'Good afternoon';
+    } else {
+      base = isArabic ? 'مساء الخير' : 'Good evening';
     }
-    if (hour >= 12 && hour < 18) {
-      return isArabic ? 'مساء الخير.' : 'Good afternoon.';
-    }
-    return isArabic ? 'مساء الخير.' : 'Good evening.';
+    final trimmed = name?.trim();
+    if (trimmed == null || trimmed.isEmpty) return '$base.';
+    return isArabic ? '$base، $trimmed.' : '$base, $trimmed.';
   }
 
   String get nothingHere =>
@@ -132,15 +161,17 @@ class AppLocalizations {
       isArabic ? 'ما الذي لا يزال غير واضح؟' : 'What is still unclear';
   String get sourceComparison =>
       isArabic ? 'مقارنة المصادر' : 'Source comparison';
-  String get originalSources =>
-      isArabic ? 'المصادر الأصلية' : 'Original sources';
-  String openSource(String source) =>
-      isArabic ? 'افتح $source' : 'Open $source';
+  String get readFullArticleOn =>
+      isArabic ? 'اقرأ المقال كاملاً على' : 'Read full article on';
   String sources(String value) =>
       isArabic ? 'المصادر: $value' : 'Sources: $value';
   String updated(String value) => isArabic ? 'حُدّث $value' : 'Updated $value';
-  String get unknownSource => isArabic ? 'مصدر غير معروف' : 'Unknown source';
-  String moreSources(String source, int count) => '$source + $count';
+  String sourceCount(int count) {
+    if (isArabic) {
+      return count == 1 ? 'مصدر واحد' : '$count مصادر';
+    }
+    return count == 1 ? '1 source' : '$count sources';
+  }
 
   String briefingProgress(int read, int total) => isArabic
       ? 'تمت قراءة $read من $total أخبار'

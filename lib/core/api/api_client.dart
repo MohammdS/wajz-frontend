@@ -1,4 +1,4 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 
 import 'package:flutter/foundation.dart';
 
@@ -14,12 +14,15 @@ const apiBaseUrl = String.fromEnvironment(
 
 class ApiClient {
   ApiClient({String? baseUrl, Dio? dio})
-      : _dio = dio ??
-            Dio(BaseOptions(
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
               baseUrl: baseUrl ?? apiBaseUrl,
               connectTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 20),
-            ));
+            ),
+          );
 
   final Dio _dio;
   String? _token;
@@ -28,8 +31,9 @@ class ApiClient {
 
   set token(String? value) => _token = value;
 
-  Options get _authOptions =>
-      Options(headers: _token != null ? {'Authorization': 'Bearer $_token'} : null);
+  Options get _authOptions => Options(
+    headers: _token != null ? {'Authorization': 'Bearer $_token'} : null,
+  );
 
   Future<String> devLogin(String email, {String? displayName}) async {
     final response = await _dio.post<Map<String, dynamic>>(
@@ -85,9 +89,14 @@ class ApiClient {
     return Briefing.fromJson(response.data!);
   }
 
+  Future<void> markStoryOpened(String id) =>
+      _dio.post<void>('/me/stories/$id/opened', options: _authOptions);
+
   Future<Preferences> fetchPreferences() async {
-    final response =
-        await _dio.get<Map<String, dynamic>>('/me/preferences', options: _authOptions);
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/me/preferences',
+      options: _authOptions,
+    );
     return Preferences.fromJson(response.data!);
   }
 

@@ -62,6 +62,33 @@ void main() {
       expect(parsed.briefingLength, '5_minutes');
       expect(parsed.onboardingCompleted, isTrue);
     });
+
+    test('Briefing parses opened story ids', () {
+      final briefing = Briefing.fromJson({
+        'date': '2026-06-14',
+        'briefing_length': '5_minutes',
+        'estimated_read_time_minutes': 5,
+        'greeting': 'Good morning.',
+        'stories': <Map<String, dynamic>>[],
+        'opened_story_ids': ['story-1', 'story-2'],
+        'completion_message': 'You are caught up.',
+      });
+      expect(briefing.openedStoryIds, {'story-1', 'story-2'});
+    });
+  });
+
+  group('localization', () {
+    test('source count hides publication names', () {
+      const english = AppLocalizations(Locale('en'));
+      const arabic = AppLocalizations(Locale('ar'));
+
+      expect(english.sourceCount(1), '1 source');
+      expect(english.sourceCount(3), '3 sources');
+      expect(english.readFullArticleOn, 'Read full article on');
+      expect(arabic.sourceCount(1), 'مصدر واحد');
+      expect(arabic.sourceCount(3), '3 مصادر');
+      expect(arabic.readFullArticleOn, 'اقرأ المقال كاملاً على');
+    });
   });
 
   group('widgets', () {

@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/l10n/app_localizations.dart';
 import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
 import '../../widgets/preference_chip.dart';
 import '../../widgets/states.dart';
 import '../../widgets/story_card.dart';
 import '../stories/story_providers.dart';
+import 'explore_desktop.dart';
 
 /// Explore tab (PRD 16.3): controlled browsing by category - a limited list
 /// per category, not an infinite feed.
@@ -23,6 +25,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktopWidth(context)) return const DesktopExploreView();
+
     final categories = ref.watch(categoriesProvider);
     final stories = ref.watch(exploreStoriesProvider(_category));
 
@@ -31,6 +35,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              WajzSpacing.md,
+              WajzSpacing.xs,
+              WajzSpacing.md,
+              WajzSpacing.md,
+            ),
+            child: Text(
+              context.l10n.topicsHelp,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
           SizedBox(
             height: 48,
             child: ListView(

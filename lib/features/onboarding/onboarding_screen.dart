@@ -27,13 +27,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final Set<String> _topics = {};
   final Set<String> _regions = {};
   String _briefingLength = '10_minutes';
-  String _explanationLevel = 'standard';
 
   static const _languages = ['en', 'ar'];
 
   static const _lengths = ['5_minutes', '10_minutes', '20_minutes'];
-
-  static const _levels = ['brief', 'standard', 'beginner_friendly'];
 
   @override
   void initState() {
@@ -65,7 +62,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               topics: _topics.toList(),
               regions: _regions.toList(),
               briefingLength: _briefingLength,
-              explanationLevel: _explanationLevel,
               onboardingCompleted: true,
             ),
           );
@@ -269,19 +265,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               subtitle: context.l10n.briefingLengthDetail(value),
               selected: _briefingLength == value,
               onTap: () => setState(() => _briefingLength = value),
-            ),
-          const SizedBox(height: WajzSpacing.lg),
-          Text(
-            context.l10n.explanationLevel,
-            style: theme.textTheme.titleSmall,
-          ),
-          const SizedBox(height: WajzSpacing.sm),
-          for (final value in _levels)
-            SelectableTile(
-              title: context.l10n.explanationLabel(value),
-              subtitle: context.l10n.explanationDetail(value),
-              selected: _explanationLevel == value,
-              onTap: () => setState(() => _explanationLevel = value),
             ),
         ],
       ),

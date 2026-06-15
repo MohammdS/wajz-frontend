@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/app_localizations.dart';
 import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/arabesque.dart';
+import '../../widgets/wajz_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -67,27 +69,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'واجِز',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.displayMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
+                    WajzHeroPanel(
+                      padding: const EdgeInsets.fromLTRB(
+                        WajzSpacing.lg,
+                        WajzSpacing.xl,
+                        WajzSpacing.lg,
+                        WajzSpacing.xl,
+                      ),
+                      child: Column(
+                        children: [
+                          const WajzLogoMark(size: 72, tile: true),
+                          const SizedBox(height: WajzSpacing.md),
+                          WajzWordmark(
+                            fontSize: 38,
+                            color: context.brand.onBrand,
+                            subColor: context.brand.accentBright,
+                            center: true,
+                          ),
+                          const SizedBox(height: WajzSpacing.sm),
+                          Text(
+                            context.l10n.loginSubtitle,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF93A4B8),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: WajzSpacing.lg),
+                    const SizedBox(height: WajzSpacing.xl),
                     Text(
                       context.l10n.loginTitle,
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: WajzSpacing.sm),
-                    Text(
-                      context.l10n.loginSubtitle,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      style: theme.textTheme.headlineSmall,
                     ),
                     const SizedBox(height: WajzSpacing.lg),
                     Container(
