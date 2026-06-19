@@ -46,7 +46,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
       if (!mounted) return;
       final session = ref.read(sessionProvider);
-      context.go(session.onboardingDone ? '/today' : '/onboarding');
+      final from = GoRouterState.of(context).uri.queryParameters['from'];
+      context.go(
+        session.onboardingDone
+            ? (from?.isNotEmpty == true ? from! : '/today')
+            : '/onboarding',
+      );
     } catch (_) {
       if (mounted) setState(() => _error = context.l10n.loginFailed);
     } finally {
@@ -168,6 +173,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Text(context.l10n.loginTitle),
+                    ),
+                    const SizedBox(height: WajzSpacing.sm),
+                    TextButton(
+                      onPressed: _submitting
+                          ? null
+                          : () => context.go('/explore'),
+                      child: const Text('Continue without signing in'),
                     ),
                   ],
                 ),

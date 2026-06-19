@@ -20,7 +20,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       final session = ref.read(sessionProvider);
       final path = state.matchedLocation;
       if (path == '/' || path == '/login') return null;
-      if (!session.authenticated) return '/login';
+
+      final protected = path == '/today' || path == '/onboarding';
+      if (protected && !session.authenticated) {
+        return Uri(
+          path: '/login',
+          queryParameters: {'from': state.uri.toString()},
+        ).toString();
+      }
       return null;
     },
     routes: [

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/app_localizations.dart';
+import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/desktop/desktop_layout.dart';
 import '../../widgets/desktop/desktop_story_tile.dart';
@@ -22,6 +24,25 @@ class _DesktopSavedViewState extends ConsumerState<DesktopSavedView> {
 
   @override
   Widget build(BuildContext context) {
+    final authenticated = ref.watch(
+      sessionProvider.select((session) => session.authenticated),
+    );
+    if (!authenticated) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DesktopPaneHeader(title: context.l10n.saved),
+          Expanded(
+            child: _DesktopSignInRequired(
+              title: 'Sign in to view saved stories',
+              message: 'Saved stories are tied to your account.',
+              from: '/saved',
+            ),
+          ),
+        ],
+      );
+    }
+
     final saved = ref.watch(savedStoriesProvider);
     final opened = ref.watch(openedStoriesProvider).ids;
 
@@ -76,6 +97,65 @@ class _DesktopSavedViewState extends ConsumerState<DesktopSavedView> {
       master: master,
       selectedStoryId: _selected,
       onCloseDetail: () => setState(() => _selected = null),
+    );
+  }
+}
+
+class _DesktopSignInRequired extends StatelessWidget {
+  const _DesktopSignInRequired({
+    required this.title,
+    required this.message,
+    required this.from,
+  });
+
+  final String title;
+  final String message;
+  final String from;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(WajzSpacing.xl),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 48,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: WajzSpacing.md),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: WajzSpacing.sm),
+              Text(
+                message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: WajzSpacing.md),
+              FilledButton(
+                onPressed: () => context.go(
+                  Uri(
+                    path: '/login',
+                    queryParameters: {'from': from},
+                  ).toString(),
+                ),
+                child: Text(context.l10n.loginTitle),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

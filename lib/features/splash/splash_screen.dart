@@ -39,30 +39,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _start() async {
     setState(() => _error = null);
     try {
-      final restored =
-          await ref.read(sessionProvider.notifier).restoreSession().timeout(
-                const Duration(seconds: 6),
-              );
+      final restored = await ref
+          .read(sessionProvider.notifier)
+          .restoreSession()
+          .timeout(const Duration(seconds: 6));
       if (!mounted) return;
       if (!restored) {
-        context.go('/login');
+        context.go('/explore');
         return;
       }
       final session = ref.read(sessionProvider);
       context.go(session.onboardingDone ? '/today' : '/onboarding');
     } catch (_) {
-      if (mounted) {
-        setState(() => _error = context.l10n.connectToWajzError);
-      }
+      if (mounted) context.go('/explore');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final fade = CurvedAnimation(parent: _intro, curve: Curves.easeOut);
-    final scale = Tween(begin: 0.82, end: 1.0).animate(
-      CurvedAnimation(parent: _intro, curve: Curves.easeOutBack),
-    );
+    final scale = Tween(
+      begin: 0.82,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _intro, curve: Curves.easeOutBack));
     final brand = context.brand;
 
     return Scaffold(
@@ -105,9 +104,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       context.l10n.tagline,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: brand.onBrandFaint,
-                            height: 1.5,
-                          ),
+                        color: brand.onBrandFaint,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: WajzSpacing.xxl),
                     if (_error == null)
@@ -116,7 +115,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         height: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(brand.accentBright),
+                          valueColor: AlwaysStoppedAnimation(
+                            brand.accentBright,
+                          ),
                         ),
                       )
                     else ...[

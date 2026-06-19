@@ -28,6 +28,7 @@ class OpenedStoriesController extends Notifier<OpenedStoriesState> {
     if (state.ids.contains(storyId)) return;
     final previous = state;
     state = OpenedStoriesState(date: state.date, ids: {...state.ids, storyId});
+    if (!ref.read(sessionProvider).authenticated) return;
     try {
       await ref.read(apiClientProvider).markStoryOpened(storyId);
     } catch (_) {

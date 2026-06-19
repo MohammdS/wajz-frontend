@@ -41,9 +41,80 @@ class ProfileSettingsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authenticated = ref.watch(
+      sessionProvider.select((session) => session.authenticated),
+    );
+    final theme = Theme.of(context);
+
+    if (!authenticated) {
+      final language = ref.watch(appLocaleProvider).languageCode;
+      return ListView(
+        padding: padding ?? const EdgeInsets.all(WajzSpacing.md),
+        children: [
+          _SectionTitle(context.l10n.appearance),
+          const _ThemePicker(),
+          _SectionTitle(context.l10n.language),
+          Wrap(
+            spacing: WajzSpacing.sm,
+            children: [
+              for (final code in _languages)
+                PreferenceChip(
+                  label: context.l10n.languageName(code),
+                  selected: language == code,
+                  onTap: () =>
+                      ref.read(appLocaleProvider.notifier).setLanguage(code),
+                ),
+            ],
+          ),
+          const SizedBox(height: WajzSpacing.xl),
+          Container(
+            padding: const EdgeInsets.all(WajzSpacing.lg),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(WajzRadius.lg),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.lock_outline,
+                  size: 36,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: WajzSpacing.sm),
+                Text(
+                  'Sign in for your daily briefing',
+                  style: theme.textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: WajzSpacing.xs),
+                Text(
+                  'Briefing preferences, saved stories, and reading progress are account features.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: WajzSpacing.md),
+                FilledButton(
+                  onPressed: () => context.go(
+                    Uri(
+                      path: '/login',
+                      queryParameters: {'from': '/profile'},
+                    ).toString(),
+                  ),
+                  child: Text(context.l10n.loginTitle),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: WajzSpacing.xl),
+        ],
+      );
+    }
+
     final prefsAsync = ref.watch(preferencesProvider);
     final categories = ref.watch(categoriesProvider);
-    final theme = Theme.of(context);
 
     return prefsAsync.when(
       loading: () => const LoadingState(),
@@ -98,8 +169,7 @@ class ProfileSettingsList extends ConsumerWidget {
               spacing: WajzSpacing.sm,
               runSpacing: WajzSpacing.sm,
               children: [
-                for (final region
-                    in categories.value?.regions ?? prefs.regions)
+                for (final region in categories.value?.regions ?? prefs.regions)
                   PreferenceChip(
                     label: context.l10n.region(region),
                     selected: prefs.regions.contains(region),
