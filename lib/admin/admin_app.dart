@@ -14,6 +14,7 @@ const _navItems = [
   ('Sources', Icons.rss_feed_outlined),
   ('Users', Icons.people_outline),
   ('AI Runs', Icons.smart_toy_outlined),
+  ('Audit Logs', Icons.history_outlined),
   ('Settings', Icons.settings_outlined),
 ];
 
@@ -229,6 +230,7 @@ class _AdminShellState extends State<AdminShell> {
     5 => SourcesPage(api: widget.api, session: widget.session),
     6 => UsersPage(api: widget.api, session: widget.session),
     7 => AiRunsPage(api: widget.api),
+    8 => AuditLogsPage(api: widget.api),
     _ => SettingsPage(api: widget.api, session: widget.session),
   };
 
@@ -627,9 +629,27 @@ class ArticlesPage extends StatefulWidget {
 
 class _ArticlesPageState extends State<ArticlesPage> {
   final search = TextEditingController();
+  final selectedIds = <String>{};
   String status = '';
   int page = 1;
   int revision = 0;
+
+  Future<void> reprocessSelected() async {
+    if (selectedIds.isEmpty) return;
+    if (!await confirm(
+      context,
+      'Reprocess ${selectedIds.length} selected articles?',
+    )) {
+      return;
+    }
+    await widget.api.post('/admin/articles/reprocess-selected', {
+      'article_ids': selectedIds.toList(),
+    });
+    setState(() {
+      selectedIds.clear();
+      revision++;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -653,6 +673,19 @@ class _ArticlesPageState extends State<ArticlesPage> {
               subtitle:
                   'Inspect collected text, processing state, and clustering.',
               onRefresh: refresh,
+              actions: widget.session.canEdit
+                  ? [
+                      FilledButton.icon(
+                        onPressed: selectedIds.isEmpty
+                            ? null
+                            : reprocessSelected,
+                        icon: const Icon(Icons.replay),
+                        label: Text(
+                          'Reprocess selected (${selectedIds.length})',
+                        ),
+                      ),
+                    ]
+                  : const [],
             ),
             FilterBar(
               children: [
@@ -711,6 +744,15 @@ class _ArticlesPageState extends State<ArticlesPage> {
                         rows: [
                           for (final article in items)
                             DataRow(
+                              selected: selectedIds.contains(article['id']),
+                              onSelectChanged: widget.session.canEdit
+                                  ? (selected) => setState(() {
+                                      final id = article['id'] as String;
+                                      selected == true
+                                          ? selectedIds.add(id)
+                                          : selectedIds.remove(id);
+                                    })
+                                  : null,
                               cells: [
                                 DataCell(
                                   SizedBox(
@@ -820,6 +862,9 @@ class _StudioPageState extends State<StudioPage> {
   final why = TextEditingController();
   bool loading = false;
   String result = '';
+  late final Future<List<dynamic>> templates = widget.api.getList(
+    '/admin/studio/templates',
+  );
 
   Future<void> importUrls() async {
     final values = urls.text
@@ -860,7 +905,7 @@ class _StudioPageState extends State<StudioPage> {
     );
   }
 
-  Future<void> run(Future<dynamic> Function() action) async {
+  Future<dynamic> run(Future<dynamic> Function() action) async {
     setState(() {
       loading = true;
       result = '';
@@ -870,11 +915,45 @@ class _StudioPageState extends State<StudioPage> {
       setState(
         () => result = const JsonEncoder.withIndent('  ').convert(response),
       );
+      return response;
     } on DioException catch (exception) {
       setState(() => result = errorText(exception));
+      return null;
     } finally {
       setState(() => loading = false);
     }
+  }
+
+  Future<void> runAiAction(String action) async {
+    final sourceText = synthesis.text.trim().isNotEmpty
+        ? synthesis.text.trim()
+        : summary.text.trim();
+    if (title.text.trim().isEmpty || sourceText.isEmpty) {
+      setState(
+        () => result =
+            'Add a title and summary or full synthesis before using AI actions.',
+      );
+      return;
+    }
+    final response = await run(
+      () => widget.api.post('/admin/studio/ai-action', {
+        'action': action,
+        'title': title.text.trim(),
+        'text': sourceText,
+        if (action == 'translate') 'target_language': 'ar',
+      }),
+    );
+    if (response is! Map) return;
+    final value = response['result'];
+    setState(() {
+      if (action == 'generate_summary' && value is String) {
+        summary.text = value;
+      } else if (action == 'generate_key_facts' && value is List) {
+        facts.text = value.join('\n');
+      } else if (action == 'generate_why_it_matters' && value is String) {
+        why.text = value;
+      }
+    });
   }
 
   @override
@@ -890,23 +969,29 @@ class _StudioPageState extends State<StudioPage> {
           subtitle:
               'AI output is editable and defaults to draft. Publishing is explicit.',
         ),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            for (final template in [
-              'Breaking News',
-              'Developing Story',
-              'Explainer',
-              'Regional Update',
-              'Source Comparison',
-            ])
-              ActionChip(
-                label: Text(template),
-                avatar: const Icon(Icons.description_outlined, size: 18),
-                onPressed: () => setState(() => title.text = '$template: '),
-              ),
-          ],
+        FutureBuilder<List<dynamic>>(
+          future: templates,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text(
+                'Could not load templates: ${readableError(snapshot.error)}',
+              );
+            }
+            if (!snapshot.hasData) return const LinearProgressIndicator();
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                for (final raw in snapshot.requireData)
+                  ActionChip(
+                    label: Text(raw['name'] as String),
+                    avatar: const Icon(Icons.description_outlined, size: 18),
+                    onPressed: () =>
+                        setState(() => title.text = '${raw['name']}: '),
+                  ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 20),
         Row(
@@ -984,6 +1069,40 @@ class _StudioPageState extends State<StudioPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'AI drafting tools',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final action in const [
+                          ('generate_summary', 'Summary'),
+                          ('generate_key_facts', 'Key facts'),
+                          ('generate_why_it_matters', 'Why it matters'),
+                          ('detect_uncertainty', 'Uncertainty'),
+                          ('detect_opinion', 'Opinion'),
+                          ('generate_source_comparison', 'Source comparison'),
+                          ('generate_arabic', 'Arabic version'),
+                        ])
+                          ActionChip(
+                            label: Text(action.$2),
+                            avatar: const Icon(
+                              Icons.auto_awesome_outlined,
+                              size: 17,
+                            ),
+                            onPressed: loading
+                                ? null
+                                : () => runAiAction(action.$1),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     FilledButton(
                       onPressed: loading ? null : createManual,
                       child: const Text('Save manual draft'),
@@ -1015,6 +1134,37 @@ class IngestionPage extends StatefulWidget {
 
 class _IngestionPageState extends State<IngestionPage> {
   int revision = 0;
+  bool actionLoading = false;
+
+  Future<void> execute(
+    String path, {
+    Map<String, dynamic>? data,
+    String? confirmation,
+  }) async {
+    if (confirmation != null && !await confirm(context, confirmation)) return;
+    setState(() => actionLoading = true);
+    try {
+      final response = await widget.api.post(path, data);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            response is Map && response['status'] != null
+                ? 'Completed: ${response['status']}'
+                : 'Operation completed.',
+          ),
+        ),
+      );
+      setState(() => revision++);
+    } on DioException catch (exception) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorText(exception))));
+    } finally {
+      if (mounted) setState(() => actionLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1032,28 +1182,52 @@ class _IngestionPageState extends State<IngestionPage> {
             actions: widget.session.canEdit
                 ? [
                     FilledButton.icon(
-                      onPressed: () async {
-                        await widget.api.post('/admin/ingestion/run', {});
-                        setState(() => revision++);
-                      },
+                      onPressed: actionLoading
+                          ? null
+                          : () => execute('/admin/ingestion/run', data: {}),
                       icon: const Icon(Icons.play_arrow),
                       label: const Text('Run all active sources'),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        await widget.api.post('/admin/ingestion/retry-failed');
-                        setState(() => revision++);
+                    PopupMenuButton<String>(
+                      enabled: !actionLoading,
+                      tooltip: 'More ingestion actions',
+                      onSelected: (action) {
+                        switch (action) {
+                          case 'retry_articles':
+                            execute('/admin/ingestion/retry-failed');
+                          case 'retry_feeds':
+                            execute('/admin/ingestion/retry-failed-feeds');
+                          case 'process':
+                            execute('/admin/processing/run');
+                          case 'translations':
+                            execute('/admin/translations/run');
+                        }
                       },
-                      icon: const Icon(Icons.replay),
-                      label: const Text('Retry failed articles'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        await widget.api.post('/admin/processing/run');
-                        setState(() => revision++);
-                      },
-                      icon: const Icon(Icons.settings_suggest),
-                      label: const Text('Process pending'),
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'retry_articles',
+                          child: Text('Retry failed articles'),
+                        ),
+                        PopupMenuItem(
+                          value: 'retry_feeds',
+                          child: Text('Retry failed feeds'),
+                        ),
+                        PopupMenuItem(
+                          value: 'process',
+                          child: Text('Process pending articles'),
+                        ),
+                        PopupMenuItem(
+                          value: 'translations',
+                          child: Text('Backfill missing translations'),
+                        ),
+                      ],
+                      child: IgnorePointer(
+                        child: OutlinedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.more_horiz),
+                          label: const Text('More actions'),
+                        ),
+                      ),
                     ),
                   ]
                 : const [],
@@ -1071,7 +1245,25 @@ class _IngestionPageState extends State<IngestionPage> {
                           subtitle: Text(
                             '${raw['articles_fetched']} articles • ${raw['sources_failed']} failed sources',
                           ),
-                          trailing: StatusBadge(raw['status']),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              StatusBadge(raw['status']),
+                              if (widget.session.canEdit &&
+                                  {'queued', 'running'}.contains(raw['status']))
+                                IconButton(
+                                  tooltip: 'Cancel run',
+                                  onPressed: actionLoading
+                                      ? null
+                                      : () => execute(
+                                          '/admin/ingestion-runs/${raw['id']}/cancel',
+                                          confirmation:
+                                              'Cancel ingestion run ${raw['id']}?',
+                                        ),
+                                  icon: const Icon(Icons.cancel_outlined),
+                                ),
+                            ],
+                          ),
                         ),
                     ],
                   ),
@@ -1550,6 +1742,92 @@ class AiRunsPage extends StatelessWidget {
                                   child: Text(
                                     run['error_message'] ?? '—',
                                     overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AuditLogsPage extends StatelessWidget {
+  const AuditLogsPage({super.key, required this.api});
+  final AdminApi api;
+
+  @override
+  Widget build(BuildContext context) {
+    return AdminFuture<List<dynamic>>(
+      load: () => api.getList('/admin/audit-logs', query: {'limit': 250}),
+      builder: (logs, refresh) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PageHeader(
+            title: 'Audit logs',
+            subtitle:
+                'Trace protected admin actions, actors, roles, and affected records.',
+            onRefresh: refresh,
+          ),
+          SectionCard(
+            title: '${logs.length} recent actions',
+            child: logs.isEmpty
+                ? const EmptyState('No admin actions recorded.')
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text('Time')),
+                        DataColumn(label: Text('Actor')),
+                        DataColumn(label: Text('Role')),
+                        DataColumn(label: Text('Action')),
+                        DataColumn(label: Text('Target')),
+                        DataColumn(label: Text('Details')),
+                      ],
+                      rows: [
+                        for (final log in logs)
+                          DataRow(
+                            cells: [
+                              DataCell(Text(shortDate(log['created_at']))),
+                              DataCell(Text(log['actor_email'] ?? '—')),
+                              DataCell(
+                                StatusBadge(log['actor_role'] ?? 'unknown'),
+                              ),
+                              DataCell(Text(log['action'] ?? '—')),
+                              DataCell(
+                                Text(
+                                  '${log['target_type'] ?? ''} ${log['target_id'] ?? ''}',
+                                ),
+                              ),
+                              DataCell(
+                                IconButton(
+                                  tooltip: 'View audit details',
+                                  icon: const Icon(Icons.data_object),
+                                  onPressed: () => showDialog<void>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(
+                                        log['action'] ?? 'Audit details',
+                                      ),
+                                      content: SizedBox(
+                                        width: 650,
+                                        child: SingleChildScrollView(
+                                          child: JsonView(log),
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('Close'),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
