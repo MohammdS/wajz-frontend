@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api/api_client.dart';
 import 'models/models.dart';
+import 'offline/connectivity_monitor.dart';
+import 'offline/offline_store.dart';
 import 'storage/local_store.dart';
 import 'theme/app_theme.dart';
 
@@ -11,7 +13,24 @@ final localStoreProvider = Provider<LocalStore>(
   (ref) => throw UnimplementedError('localStoreProvider must be overridden'),
 );
 
-final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
+final offlineStoreProvider = Provider<OfflineStore>(
+  (ref) => throw UnimplementedError('offlineStoreProvider must be overridden'),
+);
+
+final connectivityMonitorProvider = Provider<ConnectivityMonitor>(
+  (ref) => throw UnimplementedError(
+    'connectivityMonitorProvider must be overridden',
+  ),
+);
+
+final apiClientProvider = Provider<ApiClient>((ref) {
+  final client = ApiClient(
+    offlineStore: ref.watch(offlineStoreProvider),
+    connectivityMonitor: ref.watch(connectivityMonitorProvider),
+  );
+  ref.onDispose(client.dispose);
+  return client;
+});
 
 class AppLocaleController extends Notifier<Locale> {
   @override

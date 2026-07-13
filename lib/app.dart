@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/l10n/app_localizations.dart';
+import 'core/offline/offline_status_banner.dart';
 import 'core/providers.dart';
 import 'core/theme/app_theme.dart';
 import 'router.dart';
@@ -28,6 +29,11 @@ class WajzApp extends ConsumerWidget {
       theme: appTheme(Brightness.light, locale, palette: palette),
       darkTheme: appTheme(Brightness.dark, locale, palette: palette),
       themeMode: palette.modeLock ?? ThemeMode.system,
+      builder: (context, child) => OfflineStatusBanner(
+        monitor: ref.watch(connectivityMonitorProvider),
+        store: ref.watch(offlineStoreProvider),
+        child: child ?? const SizedBox.shrink(),
+      ),
       routerConfig: ref.watch(routerProvider),
     );
   }
