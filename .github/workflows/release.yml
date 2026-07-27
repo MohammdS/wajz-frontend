@@ -1,0 +1,99 @@
+name: Flutter Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  signed-release:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.0"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Validate production configuration
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          WAJZ_API_BASE: ${{ vars.WAJZ_API_BASE }}
+          WAJZ_SUPABASE_URL: ${{ vars.WAJZ_SUPABASE_URL }}
+          WAJZ_SUPABASE_PUBLISHABLE_KEY: ${{ vars.WAJZ_SUPABASE_PUBLISHABLE_KEY }}
+          WAJZ_AUTH_REDIRECT_URL: ${{ vars.WAJZ_AUTH_REDIRECT_URL }}
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          test -n "$KEYSTORE_PASSWORD"
+          test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
+          test -n "$WAJZ_SUPABASE_PUBLISHABLE_KEY"
+          test -n "$WAJZ_AUTH_REDIRECT_URL"
+          case "$WAJZ_API_BASE" in https://*) ;; *) exit 1 ;; esac
+          case "$WAJZ_SUPABASE_URL" in https://*) ;; *) exit 1 ;; esac
+      - name: Configure Android release key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/wajz-release.jks
+          {
+            echo "storeFile=wajz-release.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/key.properties
+      - name: Build signed Android App Bundle
+        run: >
+          flutter build appbundle --release
+          --dart-define=WAJZ_API_BASE=${{ vars.WAJZ_API_BASE }}
+          --dart-define=WAJZ_SUPABASE_URL=${{ vars.WAJZ_SUPABASE_URL }}
+          --dart-define=WAJZ_SUPABASE_PUBLISHABLE_KEY=${{ vars.WAJZ_SUPABASE_PUBLISHABLE_KEY }}
+          --dart-define=WAJZ_AUTH_REDIRECT_URL=${{ vars.WAJZ_AUTH_REDIRECT_URL }}
+      - name: Build consumer web
+        run: >
+          flutter build web --release
+          --dart-define=WAJZ_API_BASE=${{ vars.WAJZ_API_BASE }}
+          --dart-define=WAJZ_SUPABASE_URL=${{ vars.WAJZ_SUPABASE_URL }}
+          --dart-define=WAJZ_SUPABASE_PUBLISHABLE_KEY=${{ vars.WAJZ_SUPABASE_PUBLISHABLE_KEY }}
+      - run: tar -czf wajz-consumer-web.tar.gz -C build/web .
+      - name: Build admin web
+        run: >
+          flutter build web --release --target lib/main_admin.dart
+          --dart-define=WAJZ_API_BASE=${{ vars.WAJZ_API_BASE }}
+          --dart-define=WAJZ_SUPABASE_URL=${{ vars.WAJZ_SUPABASE_URL }}
+          --dart-define=WAJZ_SUPABASE_PUBLISHABLE_KEY=${{ vars.WAJZ_SUPABASE_PUBLISHABLE_KEY }}
+      - run: tar -czf wajz-admin-web.tar.gz -C build/web .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wajz-release
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            wajz-consumer-web.tar.gz
+            wajz-admin-web.tar.gz
+      - name: Attach artifacts to GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release create "${GITHUB_REF_NAME}"
+          build/app/outputs/bundle/release/app-release.aab
+          wajz-consumer-web.tar.gz
+          wajz-admin-web.tar.gz
+          --generate-notes
