@@ -312,13 +312,7 @@ class _ThemeCard extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    Center(
-                      child: WajzLogoMark(
-                        size: 24,
-                        lineColor: palette.onBrand,
-                        accentColor: palette.accentBright,
-                      ),
-                    ),
+                    Center(child: const WajzLogoMark(size: 24)),
                     if (selected)
                       Positioned(
                         top: 5,

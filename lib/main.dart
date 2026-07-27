@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'core/api/api_client.dart';
+import 'core/auth/auth_service.dart';
 import 'core/offline/connectivity_monitor.dart';
 import 'core/offline/offline_store.dart';
 import 'core/providers.dart';
@@ -12,6 +13,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final store = await LocalStore.create();
   final offlineStore = await OfflineStore.create();
+  final authService = await AuthService.create();
   final connectivityMonitor = ConnectivityMonitor(baseUrl: apiBaseUrl);
   await connectivityMonitor.initialize();
   runApp(
@@ -19,6 +21,7 @@ Future<void> main() async {
       overrides: [
         localStoreProvider.overrideWithValue(store),
         offlineStoreProvider.overrideWithValue(offlineStore),
+        authServiceProvider.overrideWithValue(authService),
         connectivityMonitorProvider.overrideWithValue(connectivityMonitor),
       ],
       child: const WajzApp(),

@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 /// Tracks whether the Wajz API is reachable, not only whether a network exists.
 class ConnectivityMonitor {
   ConnectivityMonitor({required String baseUrl, Connectivity? connectivity})
-    : _connectivity = connectivity ?? Connectivity(),
+    : _connectivity = kIsWeb ? null : (connectivity ?? Connectivity()),
       _probeClient = Dio(
         BaseOptions(
           baseUrl: baseUrl,
@@ -16,22 +16,32 @@ class ConnectivityMonitor {
         ),
       );
 
-  final Connectivity _connectivity;
+  final Connectivity? _connectivity;
   final Dio _probeClient;
   final ValueNotifier<bool> online = ValueNotifier(true);
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   Timer? _retryTimer;
 
   Future<void> initialize() async {
-    await _update(await _connectivity.checkConnectivity());
-    _subscription = _connectivity.onConnectivityChanged.listen(_update);
+    final connectivity = _connectivity;
+    if (connectivity == null) {
+      await _probeApi();
+    } else {
+      await _update(await connectivity.checkConnectivity());
+      _subscription = connectivity.onConnectivityChanged.listen(_update);
+    }
     _retryTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!online.value) checkNow();
     });
   }
 
   Future<bool> checkNow() async {
-    await _update(await _connectivity.checkConnectivity());
+    final connectivity = _connectivity;
+    if (connectivity == null) {
+      await _probeApi();
+    } else {
+      await _update(await connectivity.checkConnectivity());
+    }
     return online.value;
   }
 
@@ -41,6 +51,10 @@ class ConnectivityMonitor {
       markOffline();
       return;
     }
+    await _probeApi();
+  }
+
+  Future<void> _probeApi() async {
     try {
       await _probeClient.get<void>('/health');
       markOnline();

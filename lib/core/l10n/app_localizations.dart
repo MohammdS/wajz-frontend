@@ -30,14 +30,42 @@ class AppLocalizations {
   String get temporaryLoginNotice => isArabic
       ? 'تسجيل دخول مؤقت للتطوير. لا تحتاج إلى كلمة مرور.'
       : 'Temporary development login. No password is required.';
+  String get authUnavailable => isArabic
+      ? 'تسجيل الدخول غير مهيأ في هذا الإصدار. يمكنك متابعة الأخبار دون حساب.'
+      : 'Sign-in is not configured in this build. You can keep reading without an account.';
+  String get signUp => isArabic ? 'إنشاء حساب' : 'Create account';
+  String get password => isArabic ? 'كلمة المرور' : 'Password';
+  String get confirmPassword =>
+      isArabic ? 'تأكيد كلمة المرور' : 'Confirm password';
+  String get passwordRequired => isArabic
+      ? 'استخدم كلمة مرور من 8 أحرف على الأقل.'
+      : 'Use at least 8 characters.';
+  String get passwordMismatch =>
+      isArabic ? 'كلمتا المرور غير متطابقتين.' : 'Passwords do not match.';
+  String get continueWithGoogle =>
+      isArabic ? 'المتابعة باستخدام Google' : 'Continue with Google';
+  String get continueWithoutAccount =>
+      isArabic ? 'المتابعة دون تسجيل الدخول' : 'Continue without signing in';
+  String get forgotPassword =>
+      isArabic ? 'نسيت كلمة المرور؟' : 'Forgot password?';
+  String get haveAccount =>
+      isArabic ? 'لديك حساب؟ سجل الدخول' : 'Already have an account? Sign in';
+  String get needAccount =>
+      isArabic ? 'ليس لديك حساب؟ أنشئ حساباً' : 'New to Wajz? Create an account';
+  String get confirmationSent => isArabic
+      ? 'تحقق من بريدك الإلكتروني لتأكيد الحساب.'
+      : 'Check your email to confirm your account.';
+  String get resetSent => isArabic
+      ? 'أرسلنا رابط استعادة كلمة المرور إلى بريدك.'
+      : 'A password reset link was sent to your email.';
   String get emailAddress => isArabic ? 'البريد الإلكتروني' : 'Email address';
   String get displayName => isArabic ? 'الاسم (اختياري)' : 'Name (optional)';
   String get emailRequired => isArabic
       ? 'أدخل بريداً إلكترونياً صالحاً.'
       : 'Enter a valid email address.';
   String get loginFailed => isArabic
-      ? 'تعذر تسجيل الدخول. تحقق من اتصال الخادم وحاول مرة أخرى.'
-      : 'Could not sign in. Check the backend connection and try again.';
+      ? 'تعذر إكمال المصادقة. تحقق من البيانات وحاول مرة أخرى.'
+      : 'Could not complete authentication. Check your details and try again.';
   String get startBriefing => isArabic ? 'ابدأ موجزي' : 'Start my briefing';
   String get today => isArabic ? 'الموجز' : 'Briefing';
   String get explore => isArabic ? 'استكشف' : 'Explore';
@@ -104,6 +132,11 @@ class AppLocalizations {
   String get gatheringStories => isArabic
       ? 'ما زلنا نجمع الأخبار. عُد بعد قليل.'
       : 'Stories are still being gathered. Check back in a little while.';
+  String get briefingSignInTitle =>
+      isArabic ? 'سجّل الدخول لعرض موجزك' : 'Sign in to view your briefing';
+  String get briefingSignInMessage => isArabic
+      ? 'يتم تخصيص موجزك اليومي ومدة القراءة والتقدم حسب حسابك.'
+      : 'Your daily briefing, reading time, and progress are personalized to your account.';
   String get caughtUp =>
       isArabic ? 'أنت مطّلع على كل جديد.' : 'You are caught up.';
   String get caughtUpDetail => isArabic

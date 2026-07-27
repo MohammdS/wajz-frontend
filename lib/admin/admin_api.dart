@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../core/auth/auth_service.dart';
 
 const adminApiBaseUrl = String.fromEnvironment(
   'WAJZ_API_BASE',
@@ -32,26 +36,36 @@ class AdminSession {
 }
 
 class AdminApi {
-  AdminApi()
+  AdminApi(this._authService)
     : _dio = Dio(
         BaseOptions(
           baseUrl: adminApiBaseUrl,
           connectTimeout: const Duration(seconds: 15),
           receiveTimeout: const Duration(seconds: 60),
         ),
-      );
+      ) {
+    _authSubscription = _authService.authStateChanges.listen((event) {
+      _token = event.session?.accessToken;
+    });
+  }
 
   static const _storage = FlutterSecureStorage();
   static const _tokenKey = 'wajz_admin_token';
+  final AuthService _authService;
   final Dio _dio;
+  StreamSubscription<WajzAuthState>? _authSubscription;
   String? _token;
+
+  bool get productionAuthEnabled => _authService.enabled;
+  bool get developmentLoginEnabled => devLoginEnabled;
 
   Options get _auth => Options(
     headers: _token == null ? null : {'Authorization': 'Bearer $_token'},
   );
 
   Future<AdminSession?> restore() async {
-    _token = await _storage.read(key: _tokenKey);
+    _token =
+        _authService.currentAccessToken ?? await _storage.read(key: _tokenKey);
     if (_token == null) return null;
     try {
       return await session();
@@ -62,6 +76,7 @@ class AdminApi {
   }
 
   Future<AdminSession> login(String email, {String? displayName}) async {
+    if (!devLoginEnabled) throw StateError('Development login is disabled.');
     final response = await _dio.post<Map<String, dynamic>>(
       '/auth/dev-login',
       data: {'email': email, 'display_name': displayName},
@@ -70,6 +85,21 @@ class AdminApi {
     final current = await session();
     await _storage.write(key: _tokenKey, value: _token);
     return current;
+  }
+
+  Future<AdminSession> loginWithPassword(String email, String password) async {
+    final response = await _authService.signInWithPassword(
+      email: email,
+      password: password,
+    );
+    _token = response.session?.accessToken;
+    if (_token == null) throw StateError('No session returned after sign in.');
+    return session();
+  }
+
+  Future<void> signInWithGoogle() async {
+    final launched = await _authService.signInWithGoogle();
+    if (!launched) throw StateError('Could not open Google sign-in.');
   }
 
   Future<AdminSession> loginWithToken(String token) async {
@@ -88,8 +118,14 @@ class AdminApi {
   }
 
   Future<void> logout() async {
+    await _authService.signOut();
     _token = null;
     await _storage.delete(key: _tokenKey);
+  }
+
+  void dispose() {
+    _authSubscription?.cancel();
+    _dio.close(force: true);
   }
 
   Future<Map<String, dynamic>> getMap(

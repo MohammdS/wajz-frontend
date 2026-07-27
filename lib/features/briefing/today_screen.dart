@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/app_localizations.dart';
+import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/arabesque.dart';
 import '../../widgets/desktop/desktop_layout.dart';
@@ -20,6 +21,23 @@ class TodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (isDesktopWidth(context)) return const DesktopTodayView();
+
+    final authenticated = ref.watch(
+      sessionProvider.select((session) => session.authenticated),
+    );
+    if (!authenticated) {
+      return Scaffold(
+        appBar: AppBar(
+          titleSpacing: WajzSpacing.md,
+          title: const WajzLogo(markSize: 30, fontSize: 22, showLatin: false),
+        ),
+        body: SignInRequiredState(
+          title: context.l10n.briefingSignInTitle,
+          message: context.l10n.briefingSignInMessage,
+          from: '/today',
+        ),
+      );
+    }
 
     final briefing = ref.watch(briefingProvider);
     final locallyOpenedIds = ref.watch(openedStoriesProvider).ids;
@@ -176,10 +194,7 @@ class _BriefingHero extends StatelessWidget {
                 done
                     ? context.l10n.briefingComplete
                     : context.l10n.briefingProgress(read, total),
-                style: TextStyle(
-                  color: brand.onBrandFaint,
-                  fontSize: 12.5,
-                ),
+                style: TextStyle(color: brand.onBrandFaint, fontSize: 12.5),
               ),
             ],
           ),

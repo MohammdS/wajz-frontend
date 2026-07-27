@@ -1,85 +1,99 @@
-# wajz-mobile
+# Wajz clients
 
-Flutter app for **Wajz (واجِز)** — a calm, trust-first, source-grounded daily news briefing.
+Flutter consumer and admin clients for Wajz (واجِز).
 
 ## Entry points
 
-- Consumer mobile/web app: `flutter run -t lib/main.dart`
-- Admin web dashboard: `flutter run -d chrome -t lib/main_admin.dart`
+- Consumer mobile/web: `lib/main.dart`
+- Admin web: `lib/main_admin.dart`
 
-The admin dashboard is a separate web entry point. Its visible controls reflect
-roles, but all `/admin/*` authorization is enforced by the FastAPI backend.
+The consumer is guest-first. Explore and public story reading do not require
+an account. Sign-in or sign-up is optional and unlocks account-scoped
+preferences, saved stories, and personal briefings.
 
-> Stay informed in minutes. No noise. Sources included.
+## Local development
 
-## What it does
-
-- **Onboarding** — language, topics, regions, briefing length, explanation level.
-- **Today** — a finite daily briefing with a progress indicator that ends in
-  *"You are caught up."* No infinite feed.
-- **Explore** — controlled browsing by category.
-- **Story detail** — what happened, why it matters, key facts, what is still
-  unclear, source comparison, and links to every original source.
-- **Saved** — read-later list with optimistic save/unsave.
-- **Profile** — all preferences plus sign-out.
-- Calm design system: Inter, deep navy/muted teal, generous spacing, full
-  dark-mode support, no red-alert design and no dopamine mechanics.
-
-## Stack
-
-Flutter · Riverpod (state) · GoRouter (navigation) · Dio (API) ·
-flutter_secure_storage (token) · shared_preferences (local flags).
-
-The app **never calls AI APIs directly** — it only talks to
-[`wajz-backend`](../wajz-backend), which owns all keys and processing.
-
-## Running
-
-Start the backend first (see its README), then:
-
-```bash
+```powershell
 flutter pub get
-
-# Android emulator (backend on host machine):
 flutter run
-
-# Web browser (backend on the same machine):
 flutter run -d chrome
-
-# Physical device / custom host:
-flutter run --dart-define=WAJZ_API_BASE=http://192.168.1.10:8000
+flutter run -d chrome -t lib/main_admin.dart
 ```
 
-The default API base is `http://10.0.2.2:8000` on Android and
-`http://127.0.0.1:8000` on web. Override either with `WAJZ_API_BASE`.
+Defaults:
 
-Build release artifacts with:
+- Android emulator API: `http://10.0.2.2:8000`
+- Web API: `http://127.0.0.1:8000`
+- Production authentication: disabled unless its two Supabase defines exist
+- Development login: disabled unless `WAJZ_ENABLE_DEV_LOGIN=true`
 
-```bash
-flutter build apk
-flutter build web
+Enable local development login explicitly:
+
+```powershell
+flutter run --dart-define=WAJZ_ENABLE_DEV_LOGIN=true
 ```
 
-Auth in this MVP uses the backend's dev-login: the app creates a stable
-per-device account automatically. Swap `SessionController.ensureSignedIn` for
-Firebase/Supabase sign-in when moving past the MVP.
+Configure optional production authentication:
 
-## Tests & lints
+```powershell
+flutter run `
+  --dart-define=WAJZ_API_BASE=https://api.example.com `
+  --dart-define=WAJZ_SUPABASE_URL=https://project.supabase.co `
+  --dart-define=WAJZ_SUPABASE_PUBLISHABLE_KEY=...
+```
 
-```bash
+The sign-in screen supports email/password, sign-up, password reset, and
+Google OAuth. Android/iOS OAuth returns to
+`io.wajz.app://login-callback/`. Add equivalent authorized redirect URLs in
+Supabase and configure the Google provider there.
+
+All account-scoped Riverpod state is invalidated on sign-in, sign-out, token
+restoration, and account switching, preventing one account's saved stories,
+briefing, or preferences from appearing in another session.
+
+## Release builds
+
+Android release builds fail unless a real signing configuration exists. Copy
+`android/key.properties.example` to ignored `android/key.properties`, point it
+to a protected keystore, and build:
+
+```powershell
+flutter build appbundle --release `
+  --dart-define=WAJZ_API_BASE=https://api.example.com `
+  --dart-define=WAJZ_SUPABASE_URL=https://project.supabase.co `
+  --dart-define=WAJZ_SUPABASE_PUBLISHABLE_KEY=...
+```
+
+Build the two web clients separately because Flutter writes both to
+`build/web`:
+
+```powershell
+flutter build web --release
+# archive/copy build/web before the next command
+flutter build web --release -t lib/main_admin.dart
+```
+
+The release workflow performs these builds, creates a signed Android App
+Bundle, packages both web clients, and attaches artifacts to a version-tag
+release. Configure repository environment `production` with:
+
+- Secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+  `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`
+- Variables: `WAJZ_API_BASE`, `WAJZ_SUPABASE_URL`,
+  `WAJZ_SUPABASE_PUBLISHABLE_KEY`, `WAJZ_AUTH_REDIRECT_URL`
+
+Extract the web artifacts into separate directories and use
+`deployment/Caddyfile` with `deployment/.env.web.example` to serve both over
+automatically managed HTTPS.
+
+## Validation
+
+```powershell
 flutter analyze
 flutter test
+flutter build web --release
+flutter build web --release -t lib/main_admin.dart
 ```
 
-## Structure
-
-```
-lib/
-  core/        api client, models, theme, storage, shared providers
-  features/    splash, onboarding, briefing (Today), stories, explore,
-               saved, profile, preferences
-  widgets/     StoryCard, ConfidenceBadge, CategoryChip, BriefingProgress,
-               SaveButton, SourceComparisonRow, StorySection, PreferenceChip,
-               Empty/Loading/Error states, AppShell (bottom nav)
-  router.dart  GoRouter config (4-tab shell + onboarding + story detail)
-```
+The clients never receive or call AI provider keys. Gemini, translation,
+ingestion, and all other AI operations remain in the backend queue.

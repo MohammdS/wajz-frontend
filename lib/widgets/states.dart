@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+
+import 'package:go_router/go_router.dart';
 
 import '../core/l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
@@ -40,13 +42,18 @@ class EmptyState extends StatelessWidget {
           children: [
             Icon(icon, size: 48, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(height: WajzSpacing.md),
-            Text(title, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
             if (message != null) ...[
               const SizedBox(height: WajzSpacing.sm),
               Text(
                 message!,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -72,21 +79,93 @@ class ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off, size: 48, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.cloud_off,
+              size: 48,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: WajzSpacing.md),
-            Text(context.l10n.somethingWentWrong, style: theme.textTheme.titleMedium),
+            Text(
+              context.l10n.somethingWentWrong,
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: WajzSpacing.sm),
             Text(
               message ?? context.l10n.connectionError,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
               const SizedBox(height: WajzSpacing.md),
-              OutlinedButton(onPressed: onRetry, child: Text(context.l10n.tryAgain)),
+              OutlinedButton(
+                onPressed: onRetry,
+                child: Text(context.l10n.tryAgain),
+              ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class SignInRequiredState extends StatelessWidget {
+  const SignInRequiredState({
+    super.key,
+    required this.title,
+    required this.message,
+    required this.from,
+  });
+
+  final String title;
+  final String message;
+  final String from;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(WajzSpacing.xl),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 48,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: WajzSpacing.md),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: WajzSpacing.sm),
+              Text(
+                message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: WajzSpacing.md),
+              FilledButton.icon(
+                onPressed: () => context.go(
+                  Uri(
+                    path: '/login',
+                    queryParameters: {'from': from},
+                  ).toString(),
+                ),
+                icon: const Icon(Icons.login, size: 18),
+                label: Text(context.l10n.loginTitle),
+              ),
+            ],
+          ),
         ),
       ),
     );

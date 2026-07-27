@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api/api_client.dart';
+import 'auth/auth_service.dart';
 import 'models/models.dart';
 import 'offline/connectivity_monitor.dart';
 import 'offline/offline_store.dart';
@@ -15,6 +18,10 @@ final localStoreProvider = Provider<LocalStore>(
 
 final offlineStoreProvider = Provider<OfflineStore>(
   (ref) => throw UnimplementedError('offlineStoreProvider must be overridden'),
+);
+
+final authServiceProvider = Provider<AuthService>(
+  (ref) => const AuthService.disabled(),
 );
 
 final connectivityMonitorProvider = Provider<ConnectivityMonitor>(
@@ -64,56 +71,126 @@ final appThemeProvider = NotifierProvider<AppThemeController, WajzPalette>(
 
 /// App session state: token + whether onboarding is complete.
 class SessionState {
-  const SessionState({this.token, required this.onboardingDone});
+  const SessionState({
+    this.token,
+    required this.onboardingDone,
+    this.authReady = true,
+  });
 
   final String? token;
   final bool onboardingDone;
+  final bool authReady;
 
   bool get authenticated => token != null;
 
-  SessionState copyWith({String? token, bool? onboardingDone}) => SessionState(
+  SessionState copyWith({
+    String? token,
+    bool? onboardingDone,
+    bool? authReady,
+  }) => SessionState(
     token: token ?? this.token,
     onboardingDone: onboardingDone ?? this.onboardingDone,
+    authReady: authReady ?? this.authReady,
   );
 }
 
 class SessionController extends Notifier<SessionState> {
+  StreamSubscription<WajzAuthState>? _authSubscription;
+
   @override
   SessionState build() {
+    final auth = ref.watch(authServiceProvider);
+    _authSubscription?.cancel();
+    if (auth.enabled) {
+      _authSubscription = auth.authStateChanges.listen((event) {
+        final token = event.session?.accessToken;
+        if (token == null) {
+          unawaited(_clearLocalSession());
+        } else if (token != state.token) {
+          unawaited(
+            _activateToken(token).catchError((_) async {
+              await auth.signOut();
+              await _clearLocalSession();
+            }),
+          );
+        }
+      });
+      ref.onDispose(() => _authSubscription?.cancel());
+    }
     return const SessionState(onboardingDone: false);
   }
 
-  /// Restore a stored development session without creating an account.
+  /// Restore a Supabase session, or an explicitly enabled local dev session.
   Future<bool> restoreSession() async {
+    final auth = ref.read(authServiceProvider);
     final store = ref.read(localStoreProvider);
-    final api = ref.read(apiClientProvider);
-
-    final token = await store.readToken();
+    final token = auth.enabled
+        ? auth.currentAccessToken
+        : (devLoginEnabled ? await store.readToken() : null);
     if (token == null) return false;
 
-    api.token = token;
     try {
-      await _loadSession(token);
+      await _activateToken(token);
       return true;
     } catch (_) {
-      await store.clearToken();
-      api.token = null;
+      if (auth.enabled) await auth.signOut();
+      await _clearLocalSession();
       return false;
     }
   }
 
-  /// Temporary development login. The backend creates the account if needed.
-  Future<void> signIn(String email, {String? displayName}) async {
+  Future<void> signInWithPassword(String email, String password) async {
+    final response = await ref
+        .read(authServiceProvider)
+        .signInWithPassword(email: email, password: password);
+    final token = response.session?.accessToken;
+    if (token == null) throw StateError('No session returned after sign in.');
+    await _activateToken(token);
+  }
+
+  /// Returns true when email confirmation is required before sign-in.
+  Future<bool> signUp(
+    String email,
+    String password, {
+    String? displayName,
+  }) async {
+    final response = await ref
+        .read(authServiceProvider)
+        .signUp(email: email, password: password, displayName: displayName);
+    final token = response.session?.accessToken;
+    if (token == null) return true;
+    await _activateToken(token);
+    return false;
+  }
+
+  Future<void> signInWithGoogle() async {
+    final launched = await ref.read(authServiceProvider).signInWithGoogle();
+    if (!launched) throw StateError('Could not open Google sign-in.');
+  }
+
+  Future<void> sendPasswordReset(String email) =>
+      ref.read(authServiceProvider).sendPasswordReset(email);
+
+  /// Temporary development login, disabled unless explicitly enabled at build.
+  Future<void> signInForDevelopment(String email, {String? displayName}) async {
+    if (!devLoginEnabled) {
+      throw StateError('Development login is disabled.');
+    }
     final store = ref.read(localStoreProvider);
     final api = ref.read(apiClientProvider);
     final token = await api.devLogin(email, displayName: displayName);
     await store.writeToken(token);
-    api.token = token;
-    await _loadSession(token);
+    await _activateToken(token);
   }
 
-  Future<void> _loadSession(String token) async {
-    final preferences = await ref.read(apiClientProvider).fetchPreferences();
+  Future<void> _activateToken(String token) async {
+    if (state.token != token) {
+      // Publish the identity boundary before loading account data so every
+      // account-scoped provider is disposed before the new requests begin.
+      state = SessionState(token: token, onboardingDone: false);
+    }
+    final api = ref.read(apiClientProvider)..token = token;
+    final preferences = await api.fetchPreferences();
     await ref
         .read(appLocaleProvider.notifier)
         .setLanguage(preferences.preferredLanguage);
@@ -123,15 +200,19 @@ class SessionController extends Notifier<SessionState> {
     );
   }
 
+  Future<void> _clearLocalSession() async {
+    await ref.read(localStoreProvider).clearToken();
+    ref.read(apiClientProvider).token = null;
+    state = const SessionState(token: null, onboardingDone: false);
+  }
+
   Future<void> completeOnboarding() async {
     state = state.copyWith(onboardingDone: true);
   }
 
   Future<void> signOut() async {
-    final store = ref.read(localStoreProvider);
-    await store.clearToken();
-    ref.read(apiClientProvider).token = null;
-    state = const SessionState(token: null, onboardingDone: false);
+    await ref.read(authServiceProvider).signOut();
+    await _clearLocalSession();
   }
 }
 

@@ -21,7 +21,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final path = state.matchedLocation;
       if (path == '/' || path == '/login') return null;
 
-      final protected = path == '/today' || path == '/onboarding';
+      final protected = path == '/onboarding';
       if (protected && !session.authenticated) {
         return Uri(
           path: '/login',

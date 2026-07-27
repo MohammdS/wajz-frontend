@@ -90,7 +90,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   children: [
                     ScaleTransition(
                       scale: scale,
-                      child: const WajzLogoMark(size: 112, tile: true),
+                      child: const WajzLogoMark(size: 112),
                     ),
                     const SizedBox(height: WajzSpacing.lg),
                     WajzWordmark(

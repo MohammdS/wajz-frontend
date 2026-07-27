@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/models/models.dart';
 import '../../core/providers.dart';
@@ -7,10 +7,11 @@ import '../briefing/briefing_provider.dart';
 class PreferencesController extends AsyncNotifier<Preferences> {
   @override
   Future<Preferences> build() async {
+    ref.watch(sessionProvider.select((session) => session.token));
     final preferences = await ref.watch(apiClientProvider).fetchPreferences();
-    await ref.read(appLocaleProvider.notifier).setLanguage(
-          preferences.preferredLanguage,
-        );
+    await ref
+        .read(appLocaleProvider.notifier)
+        .setLanguage(preferences.preferredLanguage);
     return preferences;
   }
 
@@ -18,9 +19,9 @@ class PreferencesController extends AsyncNotifier<Preferences> {
     final api = ref.read(apiClientProvider);
     state = await AsyncValue.guard(() => api.updatePreferences(prefs));
     if (state.hasValue) {
-      await ref.read(appLocaleProvider.notifier).setLanguage(
-            state.requireValue.preferredLanguage,
-          );
+      await ref
+          .read(appLocaleProvider.notifier)
+          .setLanguage(state.requireValue.preferredLanguage);
     }
     // Briefing depends on topics/regions/length.
     ref.invalidate(briefingProvider);
@@ -28,4 +29,6 @@ class PreferencesController extends AsyncNotifier<Preferences> {
 }
 
 final preferencesProvider =
-    AsyncNotifierProvider<PreferencesController, Preferences>(PreferencesController.new);
+    AsyncNotifierProvider<PreferencesController, Preferences>(
+      PreferencesController.new,
+    );

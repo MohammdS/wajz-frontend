@@ -135,21 +135,21 @@ void main() {
       expect(find.textContaining('Two'), findsOneWidget);
     });
 
-    testWidgets('temporary login shows its form fields', (tester) async {
+    testWidgets('unconfigured auth keeps guest access available', (
+      tester,
+    ) async {
       await tester.pumpWidget(ProviderScope(child: _wrap(const LoginScreen())));
       expect(
-        find.text('Temporary development login. No password is required.'),
+        find.text(
+          'Sign-in is not configured in this build. You can keep reading without an account.',
+        ),
         findsOneWidget,
       );
       expect(
-        find.widgetWithText(TextFormField, 'Email address'),
+        find.widgetWithText(TextButton, 'Continue without signing in'),
         findsOneWidget,
       );
-      expect(
-        find.widgetWithText(TextFormField, 'Name (optional)'),
-        findsOneWidget,
-      );
-      expect(find.widgetWithText(FilledButton, 'Sign in'), findsOneWidget);
+      expect(find.byType(TextFormField), findsNothing);
     });
   });
 }

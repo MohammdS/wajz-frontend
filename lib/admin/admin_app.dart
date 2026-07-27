@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
+import '../core/auth/auth_service.dart';
 import 'admin_api.dart';
 
 const _navItems = [
@@ -19,16 +20,31 @@ const _navItems = [
 ];
 
 class WajzAdminApp extends StatefulWidget {
-  const WajzAdminApp({super.key});
+  const WajzAdminApp({super.key, required this.authService});
+
+  final AuthService authService;
 
   @override
   State<WajzAdminApp> createState() => _WajzAdminAppState();
 }
 
 class _WajzAdminAppState extends State<WajzAdminApp> {
-  final api = AdminApi();
-  late final Future<AdminSession?> restored = api.restore();
+  late final AdminApi api;
+  late final Future<AdminSession?> restored;
   AdminSession? session;
+
+  @override
+  void initState() {
+    super.initState();
+    api = AdminApi(widget.authService);
+    restored = api.restore();
+  }
+
+  @override
+  void dispose() {
+    api.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +111,7 @@ class AdminLogin extends StatefulWidget {
 class _AdminLoginState extends State<AdminLogin> {
   final email = TextEditingController(text: 'admin@wajz.app');
   final name = TextEditingController(text: 'Wajz Admin');
+  final password = TextEditingController();
   final bearerToken = TextEditingController();
   bool loading = false;
   String? error;
@@ -109,20 +126,49 @@ class _AdminLoginState extends State<AdminLogin> {
       widget.onLogin(
         token.isNotEmpty
             ? await widget.api.loginWithToken(token)
+            : widget.api.productionAuthEnabled
+            ? await widget.api.loginWithPassword(
+                email.text.trim(),
+                password.text,
+              )
             : await widget.api.login(
                 email.text.trim(),
                 displayName: name.text.trim(),
               ),
       );
-    } on DioException catch (exception) {
+    } catch (exception) {
       setState(() {
-        error = exception.response?.statusCode == 403
+        error =
+            exception is DioException && exception.response?.statusCode == 403
             ? 'This account does not have an admin role.'
             : 'Sign in failed. Check the backend and account.';
       });
     } finally {
       if (mounted) setState(() => loading = false);
     }
+  }
+
+  Future<void> googleSignIn() async {
+    setState(() {
+      loading = true;
+      error = null;
+    });
+    try {
+      await widget.api.signInWithGoogle();
+    } catch (_) {
+      if (mounted) setState(() => error = 'Could not start Google sign-in.');
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    email.dispose();
+    name.dispose();
+    password.dispose();
+    bearerToken.dispose();
+    super.dispose();
   }
 
   @override
@@ -155,15 +201,29 @@ class _AdminLoginState extends State<AdminLogin> {
                   const SizedBox(height: 28),
                   TextField(
                     controller: email,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.username],
                     decoration: const InputDecoration(labelText: 'Admin email'),
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: name,
-                    decoration: const InputDecoration(
-                      labelText: 'Display name',
+                  if (widget.api.productionAuthEnabled) ...[
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: password,
+                      obscureText: true,
+                      autofillHints: const [AutofillHints.password],
+                      onSubmitted: loading ? null : (_) => submit(),
+                      decoration: const InputDecoration(labelText: 'Password'),
                     ),
-                  ),
+                  ],
+                  if (widget.api.developmentLoginEnabled) ...[
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: name,
+                      decoration: const InputDecoration(
+                        labelText: 'Display name',
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   TextField(
                     controller: bearerToken,
@@ -187,6 +247,22 @@ class _AdminLoginState extends State<AdminLogin> {
                           )
                         : const Text('Sign in securely'),
                   ),
+                  if (widget.api.productionAuthEnabled) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: loading ? null : googleSignIn,
+                      icon: const Icon(Icons.login),
+                      label: const Text('Continue with Google'),
+                    ),
+                  ],
+                  if (!widget.api.productionAuthEnabled &&
+                      !widget.api.developmentLoginEnabled) ...[
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Supabase is not configured in this build. Paste an admin bearer token above.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   const Text(
                     'Access is verified by the backend. A normal Wajz account cannot open admin APIs.',
@@ -916,8 +992,12 @@ class _StudioPageState extends State<StudioPage> {
         () => result = const JsonEncoder.withIndent('  ').convert(response),
       );
       return response;
-    } on DioException catch (exception) {
-      setState(() => result = errorText(exception));
+    } catch (exception) {
+      setState(
+        () => result = exception is DioException
+            ? errorText(exception)
+            : exception.toString(),
+      );
       return null;
     } finally {
       setState(() => loading = false);

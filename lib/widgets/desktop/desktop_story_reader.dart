@@ -123,6 +123,7 @@ class _ReaderBody extends StatelessWidget {
     final theme = Theme.of(context);
     return Scrollbar(
       child: ListView(
+        primary: true,
         padding: const EdgeInsets.fromLTRB(
           WajzSpacing.xl,
           WajzSpacing.sm,
@@ -136,7 +137,8 @@ class _ReaderBody extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (story.category != null) CategoryChip(category: story.category!),
+                  if (story.category != null)
+                    CategoryChip(category: story.category!),
                   const SizedBox(height: WajzSpacing.sm),
                   Text(
                     story.headline,
@@ -177,7 +179,9 @@ class _ReaderBody extends StatelessWidget {
                     ],
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: WajzSpacing.lg),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: WajzSpacing.lg,
+                    ),
                     child: Container(
                       height: 3,
                       width: 48,
@@ -229,7 +233,9 @@ class _ReaderBody extends StatelessWidget {
                       children: [
                         for (final source in story.sources)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: WajzSpacing.sm),
+                            padding: const EdgeInsets.only(
+                              bottom: WajzSpacing.sm,
+                            ),
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size.fromHeight(48),

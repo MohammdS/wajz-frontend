@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/app_localizations.dart';
+import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/arabesque.dart';
 import '../../widgets/desktop/desktop_layout.dart';
@@ -25,6 +26,25 @@ class _DesktopTodayViewState extends ConsumerState<DesktopTodayView> {
 
   @override
   Widget build(BuildContext context) {
+    final authenticated = ref.watch(
+      sessionProvider.select((session) => session.authenticated),
+    );
+    if (!authenticated) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DesktopPaneHeader(title: context.l10n.today),
+          Expanded(
+            child: SignInRequiredState(
+              title: context.l10n.briefingSignInTitle,
+              message: context.l10n.briefingSignInMessage,
+              from: '/today',
+            ),
+          ),
+        ],
+      );
+    }
+
     final briefing = ref.watch(briefingProvider);
     final locallyOpened = ref.watch(openedStoriesProvider).ids;
 
@@ -120,11 +140,7 @@ class _BriefingHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              WajzLogoMark(
-                size: 26,
-                lineColor: brand.onBrand,
-                accentColor: brand.accentBright,
-              ),
+              const WajzLogoMark(size: 26),
               const SizedBox(width: WajzSpacing.sm),
               Expanded(
                 child: Text(

@@ -60,11 +60,7 @@ class ResponsiveWebFrame extends StatelessWidget {
                 bottom: -50,
                 child: Opacity(
                   opacity: 0.05,
-                  child: WajzLogoMark(
-                    size: math.min(width * 0.4, 420),
-                    lineColor: Colors.white,
-                    accentColor: brand.accentBright,
-                  ),
+                  child: WajzLogoMark(size: math.min(width * 0.4, 420)),
                 ),
               ),
               Center(
@@ -108,7 +104,9 @@ class _AppPanel extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: radius,
         border: Border.all(
-          color: context.brand.accentBright.withValues(alpha: dark ? 0.14 : 0.20),
+          color: context.brand.accentBright.withValues(
+            alpha: dark ? 0.14 : 0.20,
+          ),
         ),
         boxShadow: const [
           BoxShadow(
@@ -153,9 +151,7 @@ class _GlowOrb extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0)],
-        ),
+        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
       ),
     );
   }

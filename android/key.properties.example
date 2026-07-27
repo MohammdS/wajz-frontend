@@ -1,0 +1,4 @@
+storeFile=wajz-release.jks
+storePassword=replace-with-keystore-password
+keyAlias=wajz
+keyPassword=replace-with-key-password

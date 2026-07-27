@@ -1,0 +1,33 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$WAJZ_APP_DOMAIN} {
+	encode zstd gzip
+	root * {$WAJZ_CONSUMER_ROOT:/srv/wajz/consumer}
+	try_files {path} /index.html
+	file_server
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+}
+
+{$WAJZ_ADMIN_DOMAIN} {
+	encode zstd gzip
+	root * {$WAJZ_ADMIN_ROOT:/srv/wajz/admin}
+	try_files {path} /index.html
+	file_server
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+}
