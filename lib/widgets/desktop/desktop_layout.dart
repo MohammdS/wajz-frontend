@@ -21,7 +21,7 @@ const double kTwoPaneMinWidth = 700;
 bool isDesktopWidth(BuildContext context) =>
     MediaQuery.sizeOf(context).width >= kDesktopBreakpoint;
 
-/// The four primary destinations, shared by the sidebar and the bottom nav.
+/// The five primary destinations, shared by the sidebar and the bottom nav.
 class DesktopNavItem {
   const DesktopNavItem(this.icon, this.selectedIcon, this.label);
   final IconData icon;
@@ -31,6 +31,7 @@ class DesktopNavItem {
 
 List<DesktopNavItem> desktopNavItems(BuildContext context) => [
   DesktopNavItem(Icons.summarize_outlined, Icons.summarize, context.l10n.today),
+  DesktopNavItem(Icons.radar, Icons.radar, context.l10n.ongoing),
   DesktopNavItem(Icons.explore_outlined, Icons.explore, context.l10n.explore),
   DesktopNavItem(Icons.bookmark_outline, Icons.bookmark, context.l10n.saved),
   DesktopNavItem(Icons.person_outline, Icons.person, context.l10n.profile),
@@ -143,7 +144,11 @@ class _SidebarItem extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(selected ? item.selectedIcon : item.icon, size: 21, color: color),
+              Icon(
+                selected ? item.selectedIcon : item.icon,
+                size: 21,
+                color: color,
+              ),
               const SizedBox(width: WajzSpacing.md),
               Text(
                 item.label,

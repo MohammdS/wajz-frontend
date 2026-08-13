@@ -34,8 +34,8 @@ class _DesktopSavedViewState extends ConsumerState<DesktopSavedView> {
           DesktopPaneHeader(title: context.l10n.saved),
           Expanded(
             child: _DesktopSignInRequired(
-              title: 'Sign in to view saved stories',
-              message: 'Saved stories are tied to your account.',
+              title: context.l10n.savedSignInTitle,
+              message: context.l10n.savedSignInMessage,
               from: '/saved',
             ),
           ),

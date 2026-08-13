@@ -50,8 +50,9 @@ class AppLocalizations {
       isArabic ? 'نسيت كلمة المرور؟' : 'Forgot password?';
   String get haveAccount =>
       isArabic ? 'لديك حساب؟ سجل الدخول' : 'Already have an account? Sign in';
-  String get needAccount =>
-      isArabic ? 'ليس لديك حساب؟ أنشئ حساباً' : 'New to Wajz? Create an account';
+  String get needAccount => isArabic
+      ? 'ليس لديك حساب؟ أنشئ حساباً'
+      : 'New to Wajz? Create an account';
   String get confirmationSent => isArabic
       ? 'تحقق من بريدك الإلكتروني لتأكيد الحساب.'
       : 'Check your email to confirm your account.';
@@ -68,10 +69,28 @@ class AppLocalizations {
       : 'Could not complete authentication. Check your details and try again.';
   String get startBriefing => isArabic ? 'ابدأ موجزي' : 'Start my briefing';
   String get today => isArabic ? 'الموجز' : 'Briefing';
+  String get ongoing => isArabic ? 'الأحداث الجارية' : 'Ongoing';
   String get explore => isArabic ? 'استكشف' : 'Explore';
   String get saved => isArabic ? 'المحفوظات' : 'Saved';
   String get profile => isArabic ? 'الملف الشخصي' : 'Profile';
+  String get navToday => isArabic ? 'الموجز' : 'Briefing';
+  String get navOngoing => isArabic ? 'الأحداث' : 'Ongoing';
+  String get navExplore => isArabic ? 'استكشف' : 'Explore';
+  String get navSaved => isArabic ? 'محفوظ' : 'Saved';
+  String get navProfile => isArabic ? 'حسابي' : 'Profile';
   String get all => isArabic ? 'الكل' : 'All';
+  String get ongoingHelp => isArabic
+      ? 'تابع الأحداث الكبرى من مكان واحد، مع تحديثات مرتبطة بمصادرها.'
+      : 'Follow major developing events in one place, with every update linked to its sources.';
+  String get ongoingBadge => isArabic ? 'حدث جارٍ' : 'Ongoing';
+  String get viewAllUpdates =>
+      isArabic ? 'عرض كل التحديثات' : 'View all updates';
+  String get backToOngoing =>
+      isArabic ? 'العودة إلى الأحداث الجارية' : 'Back to ongoing events';
+  String topicStories(int count) {
+    if (isArabic) return count == 1 ? 'خبر واحد' : '$count أخبار';
+    return count == 1 ? '1 story' : '$count stories';
+  }
 
   // Desktop reading pane.
   String get selectStoryPrompt =>
@@ -124,6 +143,18 @@ class AppLocalizations {
   String get briefingLength => isArabic ? 'مدة الموجز' : 'Briefing length';
   String get notifications => isArabic ? 'الإشعارات' : 'Notifications';
   String get signOut => isArabic ? 'تسجيل الخروج' : 'Sign out';
+  String get signInForBriefing => isArabic
+      ? 'سجّل الدخول للحصول على موجزك اليومي'
+      : 'Sign in for your daily briefing';
+  String get accountFeatures => isArabic
+      ? 'تفضيلات الموجز والأخبار المحفوظة وتقدّم القراءة متاحة لأصحاب الحسابات.'
+      : 'Briefing preferences, saved stories, and reading progress are account features.';
+  String get savedSignInTitle => isArabic
+      ? 'سجّل الدخول لعرض الأخبار المحفوظة'
+      : 'Sign in to view saved stories';
+  String get savedSignInMessage => isArabic
+      ? 'ترتبط الأخبار المحفوظة بحسابك.'
+      : 'Saved stories are tied to your account.';
   String get versionTagline => isArabic
       ? 'واجِز 0.1.0 - ابقَ على اطلاع خلال دقائق.'
       : 'Wajz 0.1.0 - Stay informed in minutes.';
@@ -165,6 +196,12 @@ class AppLocalizations {
   String get noStoriesInCategory => isArabic
       ? 'لا توجد أخبار في هذه الفئة حالياً.'
       : 'No stories in this category right now.';
+  String get noOngoingTopics => isArabic
+      ? 'لا توجد أحداث جارية منشورة حالياً.'
+      : 'There are no published ongoing events right now.';
+  String get noStoriesInTopic => isArabic
+      ? 'لا توجد تحديثات منشورة لهذا الحدث حالياً.'
+      : 'There are no published updates for this event right now.';
   String get noSavedStories =>
       isArabic ? 'لا توجد أخبار محفوظة' : 'No saved stories';
   String get saveStoryHelp => isArabic
@@ -179,6 +216,8 @@ class AppLocalizations {
   String get connectToWajzError =>
       isArabic ? 'تعذر الاتصال بواجِز.' : 'Could not connect to Wajz.';
   String get saveForLater => isArabic ? 'حفظ لوقت لاحق' : 'Save for later';
+  String get signInToSave =>
+      isArabic ? 'سجّل الدخول لحفظ الأخبار.' : 'Sign in to save stories.';
   String get removeFromSaved =>
       isArabic ? 'إزالة من المحفوظات' : 'Remove from saved';
   String get updateSavedError => isArabic
@@ -192,6 +231,8 @@ class AppLocalizations {
   String get keyFacts => isArabic ? 'حقائق أساسية' : 'Key facts';
   String get stillUnclear =>
       isArabic ? 'ما الذي لا يزال غير واضح؟' : 'What is still unclear';
+  String get aiGeneratedSummary =>
+      isArabic ? 'ملخص مولّد بالذكاء الاصطناعي' : 'AI-generated summary';
   String get sourceComparison =>
       isArabic ? 'مقارنة المصادر' : 'Source comparison';
   String get readFullArticleOn =>

@@ -1,11 +1,6 @@
-# Wajz clients
+# Wajz consumer client
 
-Flutter consumer and admin clients for Wajz (واجِز).
-
-## Entry points
-
-- Consumer mobile/web: `lib/main.dart`
-- Admin web: `lib/main_admin.dart`
+Flutter mobile and web client for Wajz (واجِز).
 
 The consumer is guest-first. Explore and public story reading do not require
 an account. Sign-in or sign-up is optional and unlocks account-scoped
@@ -17,7 +12,6 @@ preferences, saved stories, and personal briefings.
 flutter pub get
 flutter run
 flutter run -d chrome
-flutter run -d chrome -t lib/main_admin.dart
 ```
 
 Defaults:
@@ -64,27 +58,23 @@ flutter build appbundle --release `
   --dart-define=WAJZ_SUPABASE_PUBLISHABLE_KEY=...
 ```
 
-Build the two web clients separately because Flutter writes both to
-`build/web`:
+Build the consumer web client:
 
 ```powershell
 flutter build web --release
-# archive/copy build/web before the next command
-flutter build web --release -t lib/main_admin.dart
 ```
 
-The release workflow performs these builds, creates a signed Android App
-Bundle, packages both web clients, and attaches artifacts to a version-tag
-release. Configure repository environment `production` with:
+The release workflow builds the consumer web client, creates a signed Android
+App Bundle, and attaches both artifacts to a version-tag release. Configure
+repository environment `production` with:
 
 - Secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
   `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`
 - Variables: `WAJZ_API_BASE`, `WAJZ_SUPABASE_URL`,
   `WAJZ_SUPABASE_PUBLISHABLE_KEY`, `WAJZ_AUTH_REDIRECT_URL`
 
-Extract the web artifacts into separate directories and use
-`deployment/Caddyfile` with `deployment/.env.web.example` to serve both over
-automatically managed HTTPS.
+Extract the web artifact and use `deployment/Caddyfile` with
+`deployment/.env.web.example` to serve it over automatically managed HTTPS.
 
 ## Validation
 
@@ -92,7 +82,6 @@ automatically managed HTTPS.
 flutter analyze
 flutter test
 flutter build web --release
-flutter build web --release -t lib/main_admin.dart
 ```
 
 The clients never receive or call AI provider keys. Gemini, translation,

@@ -36,6 +36,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void initState() {
     super.initState();
     _language = ref.read(appLocaleProvider).languageCode;
+    Future.microtask(
+      () => ref.read(analyticsServiceProvider).track('onboarding_started'),
+    );
   }
 
   @override
@@ -66,6 +69,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           );
       await ref.read(sessionProvider.notifier).completeOnboarding();
+      await ref
+          .read(analyticsServiceProvider)
+          .track(
+            'onboarding_completed',
+            properties: {
+              'language': _language,
+              'briefing_length': _briefingLength,
+            },
+          );
       if (mounted) context.go('/today');
     } catch (_) {
       if (mounted) {

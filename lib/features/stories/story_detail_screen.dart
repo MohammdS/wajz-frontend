@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/l10n/app_localizations.dart';
 import '../../core/models/models.dart';
+import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/category_chip.dart';
 import '../../widgets/confidence_badge.dart';
@@ -59,12 +60,27 @@ class _StoryDetailScreenState extends ConsumerState<StoryDetailScreen> {
   }
 }
 
-class _StoryDetailBody extends StatelessWidget {
+class _StoryDetailBody extends ConsumerWidget {
   const _StoryDetailBody({required this.story});
 
   final StoryDetail story;
 
-  Future<void> _openSource(BuildContext context, String url) async {
+  Future<void> _openSource(
+    BuildContext context,
+    WidgetRef ref,
+    String url,
+  ) async {
+    await ref
+        .read(analyticsServiceProvider)
+        .track(
+          'source_link_clicked',
+          entityType: 'story',
+          entityId: story.id,
+          properties: {
+            if (story.category != null) 'category': story.category!,
+            'language': story.contentLanguage,
+          },
+        );
     final ok = await launchUrl(
       Uri.parse(url),
       mode: LaunchMode.externalApplication,
@@ -77,7 +93,7 @@ class _StoryDetailBody extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(WajzSpacing.md),
@@ -103,6 +119,11 @@ class _StoryDetailBody extends StatelessWidget {
             ConfidenceBadge(
               label: story.confidenceLabel,
               display: story.confidenceDisplay,
+            ),
+            Chip(
+              avatar: const Icon(Icons.auto_awesome_outlined, size: 15),
+              label: Text(context.l10n.aiGeneratedSummary),
+              visualDensity: VisualDensity.compact,
             ),
             Text(
               context.l10n.sources(
@@ -176,7 +197,7 @@ class _StoryDetailBody extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    onPressed: () => _openSource(context, source.url),
+                    onPressed: () => _openSource(context, ref, source.url),
                     child: Row(
                       children: [
                         Expanded(

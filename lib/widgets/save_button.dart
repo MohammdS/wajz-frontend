@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,7 +25,7 @@ class SaveButton extends ConsumerWidget {
         if (!authenticated) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Sign in to save stories.'),
+              content: Text(context.l10n.signInToSave),
               action: SnackBarAction(
                 label: context.l10n.loginTitle,
                 onPressed: () => context.go(
@@ -41,6 +41,14 @@ class SaveButton extends ConsumerWidget {
         }
         try {
           await ref.read(savedIdsProvider.notifier).toggle(storyId);
+          await ref
+              .read(analyticsServiceProvider)
+              .track(
+                'story_saved',
+                entityType: 'story',
+                entityId: storyId,
+                properties: {'action': saved ? 'unsaved' : 'saved'},
+              );
           ref.invalidate(savedStoriesProvider);
         } catch (_) {
           if (context.mounted) {

@@ -65,6 +65,75 @@ class StoryListItem {
   );
 }
 
+class OngoingTopic {
+  const OngoingTopic({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.category,
+    required this.storyCount,
+    required this.imageUrl,
+    required this.lastUpdatedAt,
+    required this.expiresAt,
+    required this.contentLanguage,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final String? category;
+  final int storyCount;
+  final String? imageUrl;
+  final DateTime lastUpdatedAt;
+  final DateTime? expiresAt;
+  final String contentLanguage;
+
+  factory OngoingTopic.fromJson(Map<String, dynamic> json) => OngoingTopic(
+    id: json['id'] as String,
+    title: json['title'] as String,
+    description: json['description'] as String,
+    category: json['category'] as String?,
+    storyCount: json['story_count'] as int,
+    imageUrl: json['image_url'] as String?,
+    lastUpdatedAt: DateTime.parse(json['last_updated_at'] as String),
+    expiresAt: json['expires_at'] != null
+        ? DateTime.parse(json['expires_at'] as String)
+        : null,
+    contentLanguage: json['content_language'] as String? ?? 'en',
+  );
+}
+
+class OngoingTopicDetail {
+  const OngoingTopicDetail({
+    required this.topic,
+    required this.stories,
+    required this.total,
+    required this.limit,
+    required this.offset,
+  });
+
+  final OngoingTopic topic;
+  final List<StoryListItem> stories;
+  final int total;
+  final int limit;
+  final int offset;
+
+  bool get hasMore => offset + stories.length < total;
+
+  factory OngoingTopicDetail.fromJson(Map<String, dynamic> json) {
+    final stories = json['stories'] as Map<String, dynamic>;
+    return OngoingTopicDetail(
+      topic: OngoingTopic.fromJson(json),
+      stories: (stories['items'] as List)
+          .map((item) => StoryListItem.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      total: stories['total'] as int,
+      limit: stories['limit'] as int,
+      offset: stories['offset'] as int,
+    );
+  }
+}
+
 class SourceLink {
   const SourceLink({
     required this.name,

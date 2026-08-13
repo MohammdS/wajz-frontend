@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/l10n/app_localizations.dart';
 import '../../core/models/models.dart';
+import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
 import '../../features/stories/opened_stories_provider.dart';
 import '../../features/stories/story_providers.dart';
@@ -99,12 +100,27 @@ class _DesktopStoryReaderState extends ConsumerState<DesktopStoryReader> {
   }
 }
 
-class _ReaderBody extends StatelessWidget {
+class _ReaderBody extends ConsumerWidget {
   const _ReaderBody({required this.story});
 
   final StoryDetail story;
 
-  Future<void> _openSource(BuildContext context, String url) async {
+  Future<void> _openSource(
+    BuildContext context,
+    WidgetRef ref,
+    String url,
+  ) async {
+    await ref
+        .read(analyticsServiceProvider)
+        .track(
+          'source_link_clicked',
+          entityType: 'story',
+          entityId: story.id,
+          properties: {
+            if (story.category != null) 'category': story.category!,
+            'language': story.contentLanguage,
+          },
+        );
     final ok = await launchUrl(
       Uri.parse(url),
       mode: LaunchMode.externalApplication,
@@ -119,7 +135,7 @@ class _ReaderBody extends StatelessWidget {
   bool _has(String? value) => value != null && value.trim().isNotEmpty;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return Scrollbar(
       child: ListView(
@@ -159,6 +175,14 @@ class _ReaderBody extends StatelessWidget {
                       ConfidenceBadge(
                         label: story.confidenceLabel,
                         display: story.confidenceDisplay,
+                      ),
+                      Chip(
+                        avatar: const Icon(
+                          Icons.auto_awesome_outlined,
+                          size: 15,
+                        ),
+                        label: Text(context.l10n.aiGeneratedSummary),
+                        visualDensity: VisualDensity.compact,
                       ),
                       Text(
                         context.l10n.sources(
@@ -244,7 +268,8 @@ class _ReaderBody extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              onPressed: () => _openSource(context, source.url),
+                              onPressed: () =>
+                                  _openSource(context, ref, source.url),
                               child: Row(
                                 children: [
                                   Expanded(

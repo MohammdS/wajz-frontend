@@ -67,6 +67,45 @@ class ApiClient {
     return CategoryInfo.fromJson(data);
   }
 
+  Future<List<OngoingTopic>> fetchOngoingTopics({
+    String? language,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final data = await _getCachedMap(
+      '/ongoing-topics',
+      cacheKey: 'ongoing-topics:$_scope:${language ?? '-'}:$limit:$offset',
+      queryParameters: {
+        'language': ?language,
+        'limit': limit,
+        'offset': offset,
+      },
+      options: _authOptions,
+    );
+    return (data['items'] as List)
+        .map((item) => OngoingTopic.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<OngoingTopicDetail> fetchOngoingTopic(
+    String id, {
+    String? language,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final data = await _getCachedMap(
+      '/ongoing-topics/$id',
+      cacheKey: 'ongoing-topic:$_scope:$id:${language ?? '-'}:$limit:$offset',
+      queryParameters: {
+        'language': ?language,
+        'limit': limit,
+        'offset': offset,
+      },
+      options: _authOptions,
+    );
+    return OngoingTopicDetail.fromJson(data);
+  }
+
   Future<List<StoryListItem>> fetchStories({
     String? category,
     String? region,

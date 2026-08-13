@@ -28,4 +28,3 @@ jobs:
       - run: flutter test
       - run: flutter build apk --debug
       - run: flutter build web --release
-      - run: flutter build web --release --target lib/main_admin.dart

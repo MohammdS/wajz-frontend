@@ -66,6 +66,7 @@ class ProfileSettingsList extends ConsumerWidget {
                 ),
             ],
           ),
+          const _PrivacyControls(),
           const SizedBox(height: WajzSpacing.xl),
           Container(
             padding: const EdgeInsets.all(WajzSpacing.lg),
@@ -83,13 +84,13 @@ class ProfileSettingsList extends ConsumerWidget {
                 ),
                 const SizedBox(height: WajzSpacing.sm),
                 Text(
-                  'Sign in for your daily briefing',
+                  context.l10n.signInForBriefing,
                   style: theme.textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: WajzSpacing.xs),
                 Text(
-                  'Briefing preferences, saved stories, and reading progress are account features.',
+                  context.l10n.accountFeatures,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -191,6 +192,8 @@ class ProfileSettingsList extends ConsumerWidget {
                 onTap: () => save(prefs.copyWith(briefingLength: value)),
               ),
             const SizedBox(height: WajzSpacing.lg),
+            const _PrivacyControls(),
+            const SizedBox(height: WajzSpacing.lg),
             const Divider(),
             const SizedBox(height: WajzSpacing.sm),
             OutlinedButton.icon(
@@ -225,6 +228,92 @@ class ProfileSettingsList extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _PrivacyControls extends ConsumerWidget {
+  const _PrivacyControls();
+
+  Future<bool> _confirm(BuildContext context, String title, String body) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text(body),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Confirm'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    return Container(
+      padding: const EdgeInsets.all(WajzSpacing.md),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(WajzRadius.lg),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            ar ? 'الخصوصية والتحليلات' : 'Privacy and analytics',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: WajzSpacing.xs),
+          Text(
+            ar
+                ? 'يمكنك سحب الإقرار أو حذف الأحداث المرتبطة بهذا التثبيت. سحب الإقرار يعيد شاشة الخصوصية الإلزامية.'
+                : 'You can withdraw acknowledgement or delete events associated with this installation. Withdrawal returns the mandatory privacy gate.',
+          ),
+          const SizedBox(height: WajzSpacing.sm),
+          OutlinedButton(
+            onPressed: () async {
+              if (!await _confirm(
+                context,
+                ar ? 'سحب الإقرار' : 'Withdraw acknowledgement',
+                ar
+                    ? 'لن تتمكن من استخدام التطبيق حتى تقبل الإشعار مجدداً.'
+                    : 'The app will be unavailable until you accept the notice again.',
+              )) {
+                return;
+              }
+              await ref.read(analyticsServiceProvider).withdraw();
+              ref.read(privacyEpochProvider.notifier).changed();
+            },
+            child: Text(ar ? 'سحب الإقرار' : 'Withdraw acknowledgement'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (!await _confirm(
+                context,
+                ar ? 'حذف بيانات التحليلات' : 'Delete analytics data',
+                ar
+                    ? 'سيتم حذف الأحداث والإقرارات المرتبطة بهذا التثبيت.'
+                    : 'Events and acknowledgements for this installation will be deleted.',
+              )) {
+                return;
+              }
+              await ref.read(analyticsServiceProvider).deleteData();
+              ref.read(privacyEpochProvider.notifier).changed();
+            },
+            child: Text(ar ? 'حذف بيانات التحليلات' : 'Delete analytics data'),
+          ),
+        ],
+      ),
     );
   }
 }

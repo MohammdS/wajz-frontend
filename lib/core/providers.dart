@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api/api_client.dart';
+import 'analytics/analytics_service.dart';
 import 'auth/auth_service.dart';
 import 'models/models.dart';
 import 'offline/connectivity_monitor.dart';
@@ -38,6 +39,21 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   ref.onDispose(client.dispose);
   return client;
 });
+
+final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
+  return AnalyticsService(ref.watch(localStoreProvider));
+});
+
+class PrivacyEpochController extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void changed() => state++;
+}
+
+final privacyEpochProvider = NotifierProvider<PrivacyEpochController, int>(
+  PrivacyEpochController.new,
+);
 
 class AppLocaleController extends Notifier<Locale> {
   @override
@@ -74,7 +90,7 @@ class SessionState {
   const SessionState({
     this.token,
     required this.onboardingDone,
-    this.authReady = true,
+    this.authReady = false,
   });
 
   final String? token;
@@ -117,7 +133,7 @@ class SessionController extends Notifier<SessionState> {
       });
       ref.onDispose(() => _authSubscription?.cancel());
     }
-    return const SessionState(onboardingDone: false);
+    return const SessionState(onboardingDone: false, authReady: false);
   }
 
   /// Restore a Supabase session, or an explicitly enabled local dev session.
@@ -184,12 +200,18 @@ class SessionController extends Notifier<SessionState> {
   }
 
   Future<void> _activateToken(String token) async {
+    final wasAuthenticated = state.token != null;
     if (state.token != token) {
       // Publish the identity boundary before loading account data so every
       // account-scoped provider is disposed before the new requests begin.
-      state = SessionState(token: token, onboardingDone: false);
+      state = SessionState(
+        token: token,
+        onboardingDone: false,
+        authReady: state.authReady,
+      );
     }
     final api = ref.read(apiClientProvider)..token = token;
+    ref.read(analyticsServiceProvider).token = token;
     final preferences = await api.fetchPreferences();
     await ref
         .read(appLocaleProvider.notifier)
@@ -198,12 +220,31 @@ class SessionController extends Notifier<SessionState> {
       token: token,
       onboardingDone: preferences.onboardingCompleted,
     );
+    if (!wasAuthenticated) {
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .track(
+              'authentication_completed',
+              properties: {'result': 'success'},
+            ),
+      );
+    }
   }
 
   Future<void> _clearLocalSession() async {
     await ref.read(localStoreProvider).clearToken();
     ref.read(apiClientProvider).token = null;
-    state = const SessionState(token: null, onboardingDone: false);
+    ref.read(analyticsServiceProvider).token = null;
+    state = const SessionState(
+      token: null,
+      onboardingDone: false,
+      authReady: true,
+    );
+  }
+
+  void finishBootstrap() {
+    if (!state.authReady) state = state.copyWith(authReady: true);
   }
 
   Future<void> completeOnboarding() async {

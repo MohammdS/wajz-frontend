@@ -85,6 +85,31 @@ class ExploreStoriesController extends AsyncNotifier<ExploreStoriesState> {
           limit: exploreStoriesPageSize,
           offset: offset,
         );
+    if (offset == 0 && category != null) {
+      Future.microtask(
+        () => ref
+            .read(analyticsServiceProvider)
+            .track(
+              'filter_selected',
+              properties: {'category': category!, 'action': 'explore'},
+            ),
+      );
+    }
+    for (final story in stories) {
+      Future.microtask(
+        () => ref
+            .read(analyticsServiceProvider)
+            .track(
+              'story_impression',
+              entityType: 'story',
+              entityId: story.id,
+              properties: {
+                if (story.category != null) 'category': story.category!,
+                'language': story.contentLanguage,
+              },
+            ),
+      );
+    }
     Future.microtask(() => ref.read(savedIdsProvider.notifier).seed(stories));
     return stories;
   }

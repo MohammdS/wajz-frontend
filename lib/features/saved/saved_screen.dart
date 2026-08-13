@@ -25,9 +25,9 @@ class SavedScreen extends ConsumerWidget {
     if (!authenticated) {
       return Scaffold(
         appBar: AppBar(title: Text(context.l10n.saved)),
-        body: const _SignInRequired(
-          title: 'Sign in to view saved stories',
-          message: 'Saved stories are tied to your account.',
+        body: _SignInRequired(
+          title: context.l10n.savedSignInTitle,
+          message: context.l10n.savedSignInMessage,
           from: '/saved',
         ),
       );

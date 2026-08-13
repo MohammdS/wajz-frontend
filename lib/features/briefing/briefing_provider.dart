@@ -11,11 +11,28 @@ final briefingProvider = FutureProvider<Briefing>((ref) async {
   final briefing = await ref
       .watch(apiClientProvider)
       .fetchTodayBriefing(language: language);
+  Future.microtask(
+    () => ref
+        .read(analyticsServiceProvider)
+        .track(
+          'briefing_viewed',
+          entityType: 'briefing',
+          entityId: briefing.date,
+          properties: {
+            'briefing_length': briefing.briefingLength,
+            'language': language,
+          },
+        ),
+  );
   Future.microtask(() {
     ref.read(savedIdsProvider.notifier).seed(briefing.stories);
     ref
         .read(openedStoriesProvider.notifier)
-        .seed(briefing.date, briefing.openedStoryIds);
+        .seed(
+          briefing.date,
+          briefing.openedStoryIds,
+          total: briefing.stories.length,
+        );
   });
   return briefing;
 });

@@ -73,20 +73,12 @@ jobs:
           --dart-define=WAJZ_SUPABASE_URL=${{ vars.WAJZ_SUPABASE_URL }}
           --dart-define=WAJZ_SUPABASE_PUBLISHABLE_KEY=${{ vars.WAJZ_SUPABASE_PUBLISHABLE_KEY }}
       - run: tar -czf wajz-consumer-web.tar.gz -C build/web .
-      - name: Build admin web
-        run: >
-          flutter build web --release --target lib/main_admin.dart
-          --dart-define=WAJZ_API_BASE=${{ vars.WAJZ_API_BASE }}
-          --dart-define=WAJZ_SUPABASE_URL=${{ vars.WAJZ_SUPABASE_URL }}
-          --dart-define=WAJZ_SUPABASE_PUBLISHABLE_KEY=${{ vars.WAJZ_SUPABASE_PUBLISHABLE_KEY }}
-      - run: tar -czf wajz-admin-web.tar.gz -C build/web .
       - uses: actions/upload-artifact@v4
         with:
           name: wajz-release
           path: |
             build/app/outputs/bundle/release/app-release.aab
             wajz-consumer-web.tar.gz
-            wajz-admin-web.tar.gz
       - name: Attach artifacts to GitHub release
         if: startsWith(github.ref, 'refs/tags/')
         env:
@@ -95,5 +87,4 @@ jobs:
           gh release create "${GITHUB_REF_NAME}"
           build/app/outputs/bundle/release/app-release.aab
           wajz-consumer-web.tar.gz
-          wajz-admin-web.tar.gz
           --generate-notes
